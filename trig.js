@@ -24,6 +24,7 @@ function redraw() {
     circle.update();
     line.update();
     intersection.update();
+    // ball.update();
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -31,6 +32,7 @@ function redraw() {
     circle.draw();
     line.draw();
     intersection.draw();
+    ball.draw();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -129,7 +131,7 @@ circle.draw = function() {
 const line = new Figure('line');
 line.points = [{x: 320, y: 300}, {x: 500, y: 400}]
 line.lineDash = [3, 3];
-defineLineProperties(line);
+defineLineProperties(line, true);
 
 line.update = function() {
     if (mouseDown) {
@@ -165,27 +167,107 @@ line.draw = function() {
     this.drawPoints();
 }
 
-function defineLineProperties(line) {
-    Object.defineProperty(line, 'start', { get() {
-        return this.points[0].x < this.points[1].x ? this.points[0] : this.points[1]
-    } })
-    Object.defineProperty(line, 'end', { get() {
-        return this.points[0].x < this.points[1].x ? this.points[1] : this.points[0]
-    } })
-    Object.defineProperty(line, 'k', { get() {
-        return (this.end.y - this.start.y) / (this.end.x - this.start.x)
-    } })
-    Object.defineProperty(line, 'b', { get() {
-        return this.start.y - this.start.x * this.k
-    } })
+function defineLineProperties(line, ordered = false) {
+    if (ordered) {
+        Object.defineProperty(line, 'start', { get() {
+            return this.points[0].x < this.points[1].x ? this.points[0] : this.points[1]
+        } })
+        Object.defineProperty(line, 'end', { get() {
+            return this.points[0].x < this.points[1].x ? this.points[1] : this.points[0]
+        } })
+    }
+    Object.defineProperty(line, 'k', { get() { return lineK(this) } })
+    Object.defineProperty(line, 'b', { get() { return lineB(this) } })
 
     line.drawLine = function() {
-        if (this.points.length == 2) {
-            ctx.beginPath();
-            ctx.moveTo(0, this.b);
-            ctx.lineTo(canvas.width, this.k * canvas.width + this.b);
-            this.stroke();
+        if (this.start != null && this.end != null) {
+            drawLine(this)
         }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// ball
+
+const ball = new Figure();
+ball.points = null;
+ball.pos = ball.orginPos = { x: circle.origin.x - 10, y: circle.origin.y + 30 }
+ball.radius = 10
+ball.orginVel = ball.vel = { x: 40, y: 20 }
+ball.velVal = sqrt(sqr(ball.orginVel.x) + sqr(ball.orginVel.y))
+Object.defineProperty(ball, 'newPos', { get() {
+    return addVec(this.pos, this.vel)
+} })
+Object.defineProperty(ball, 'dirVec', { get() {
+    return { start: this.pos, end: this.newPos }
+} })
+ball.button = addButton('tick', () => { ball.update() })
+ball.adjust = null;
+
+ball.update = function() {
+    let newPos = addVec(this.pos, this.vel);
+    let dirVec = { start: this.pos, end: newPos }
+    defineLineProperties(dirVec)
+    let adjust = null;
+    let reflect = null
+    if (distance(newPos, circle.origin) + this.radius > circle.radius) {
+        // TODO
+        let a = sqr(dirVec.k) + 1;
+        let b = 2 * (dirVec.k * (dirVec.b - circle.origin.y) - circle.origin.x);
+        let c = sqr(circle.origin.x) + sqr(dirVec.b - circle.origin.y) - sqr(circle.radius - this.radius);
+        let x0 = (-b + sqrt(sqr(b) - 4 * a * c)) / 2 / a;
+        let x1 = (-b - sqrt(sqr(b) - 4 * a * c)) / 2 / a;
+        let x0Err = Math.abs(x0 - this.pos.x)
+        let x1Err = Math.abs(x1 - this.pos.x)
+        let y0 = dirVec.k * x0 + dirVec.b
+        let y1 = dirVec.k * x1 + dirVec.b
+        if (x0Err < x1Err) {
+            adjust = { x: x0, y: y0 }
+        } else if (x0Err > x1Err) {
+            adjust = { x: x1, y: y1 }
+        } else if (Math.abs(y0 - this.pos.y) < Math.abs(y1 - this.pos.y)) {
+            adjust = { x: x0, y: y0 }
+        } else {
+            adjust = { x: x1, y: y1 }
+        }
+        let radiusAngle = Math.atan(lineK({ start: circle.origin, end: adjust }))
+        let lineAngle = Math.atan(lineK(dirVec))
+        let reflectAngle = 2 * radiusAngle - lineAngle
+        this.reflectK = Math.tan(reflectAngle);
+        this.reflectB = adjust.y - adjust.x * this.reflectK;
+        let reflectLength = length(dirVec) - distance(this.pos, adjust)
+        reflect = {
+            x: adjust.x - Math.cos(reflectAngle) * reflectLength,
+            y: adjust.y - Math.sin(reflectAngle) * reflectLength
+        }
+        this.adjust = adjust
+        this.reflect = reflect
+        this.pos = this.reflect
+        this.vel = {
+            x: -Math.cos(reflectAngle) * this.velVal,
+            y: -Math.sin(reflectAngle) * this.velVal,
+        }
+    } else {
+        this.pos = this.newPos
+    }
+}
+
+ball.draw = function() {
+    ctx.beginPath();
+    ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
+    stroke(this);
+    ctx.beginPath();
+    ctx.arc(this.newPos.x, this.newPos.y, this.radius, 0, 2 * Math.PI);
+    stroke(this);
+    if (this.adjust) {
+        ctx.beginPath();
+        ctx.arc(this.adjust.x, this.adjust.y, this.radius, 0, 2 * Math.PI);
+        stroke({ strokeStyle: 'red' });
+        drawLine({ k: this.reflectK, b: this.reflectB })
+
+        ctx.beginPath();
+        ctx.arc(this.reflect.x, this.reflect.y, this.radius, 0, 2 * Math.PI);
+        stroke({ strokeStyle: 'green' });
     }
 }
 
@@ -198,7 +280,7 @@ intersection.radius = new Figure();
 intersection.radius.lineDash = [1, 4];
 intersection.radius.strokeStyle = '#303030';
 intersection.radius.points = [circle.origin];
-defineLineProperties(intersection.radius);
+defineLineProperties(intersection.radius, true);
 
 intersection.update = function() {
     let a = sqr(line.k) + 1;
@@ -292,9 +374,7 @@ function Figure(mode) {
     }
 
     this.stroke = function() {
-        ctx.strokeStyle = this.strokeStyle;
-        ctx.setLineDash(this.lineDash || []);
-        ctx.stroke();
+        stroke(this)
     }
 }
 
@@ -307,6 +387,15 @@ function addModeButton(name) {
     button.id = name;
     button.className = 'button_off';
     button.onclick = (event) => { toggleMode(button) }
+    document.getElementById('buttons').appendChild(button);
+    return button
+}
+
+function addButton(name, onclick) {
+    let button = document.createElement('button')
+    button.innerHTML = name;
+    button.id = name;
+    button.onclick = onclick;
     document.getElementById('buttons').appendChild(button);
     return button
 }
@@ -326,8 +415,27 @@ function toggleMode(button) {
 ////////////////////////////////////////////////////////////////////////////////
 // util
 
-const sqr = (x) => Math.pow(x, 2);
-const sqrt = (x) => Math.pow(x, 1/2);
+function sqr(x) { return Math.pow(x, 2) }
+function sqrt(x) { return Math.pow(x, 1/2) }
+
+function addVec(a, b) {
+    return { x: a.x + b.x, y: a.y + b.y }
+}
+
+function distance(a, b) {
+    return sqrt(sqr(a.x - b.x) + sqr(a.y - b.y))
+}
+
+function length({ start, end }) {
+    return distance(start, end)
+}
+
+function lineK({ start, end }) {
+    return (end.y - start.y) / (end.x - start.x)
+}
+function lineB({ start, end }) {
+    return start.y - start.x * lineK({ start, end })
+}
 
 function unwrapOr(nullable, def) {
     return (nullable === null) ? def : nullable;
@@ -356,4 +464,17 @@ function drawPoint(x, y, r, style) {
     }
     ctx.fillStyle = style;
     ctx.fill();
+}
+
+function drawLine(obj) {
+    ctx.beginPath();
+    ctx.moveTo(0, obj.b);
+    ctx.lineTo(canvas.width, obj.k * canvas.width + obj.b);
+    stroke(obj);
+}
+
+function stroke(obj) {
+    ctx.strokeStyle = obj.strokeStyle || '#000000';
+    ctx.setLineDash(obj.lineDash || []);
+    ctx.stroke();
 }
