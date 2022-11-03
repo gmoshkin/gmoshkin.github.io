@@ -25,7 +25,7 @@ function redraw() {
         line.update();
         intersection.update();
     }
-    if (buttonIsOn(ball.button)) ball.update();
+    if (buttonIsOn(ball.ballGo)) ball.update();
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -168,7 +168,7 @@ function defineLineProperties(line) {
 ////////////////////////////////////////////////////////////////////////////////
 // ball
 
-const ball = new Figure('ball');
+const ball = new Figure();
 ball.points = null;
 ball.nextPos = ball.pos = ball.orginPos = { x: circle.origin.x - 10, y: circle.origin.y + 30 }
 ball.radius = 10
@@ -186,6 +186,22 @@ Object.defineProperty(ball, 'newPos', { get() {
 Object.defineProperty(ball, 'dirVec', { get() {
     return { start: this.pos, end: this.newPos }
 } })
+ball.ballGo = addButton('ball go', () => {
+    if (buttonIsOn(ball.ballGo)) {
+        ball.ballGo.className = 'button_off'
+    } else {
+        ball.ballGo.className = 'button_on'
+        ball.moveBall.className = 'button_off'
+    }
+})
+ball.moveBall = addButton('move ball', () => {
+    if (buttonIsOn(ball.moveBall)) {
+        ball.moveBall.className = 'button_off'
+    } else {
+        ball.moveBall.className = 'button_on'
+        ball.ballGo.className = 'button_off'
+    }
+})
 ball.tick = addButton('tick', () => { ball.update() })
 ball.adjust = null;
 ball.velValInput = document.getElementById("velVal")
@@ -243,14 +259,19 @@ ball.update = function() {
         this.reflect = null
     }
 }
+ball.updateMove = function() {
+
+}
 
 ball.draw = function() {
     ctx.beginPath();
     ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
     stroke(this);
-    ctx.beginPath();
-    ctx.arc(this.newPos.x, this.newPos.y, this.radius, 0, 2 * Math.PI);
-    stroke({ strokeStyle: '#808080' });
+    if (buttonIsOn(ball.ballGo)) {
+        ctx.beginPath();
+        ctx.arc(this.newPos.x, this.newPos.y, this.radius, 0, 2 * Math.PI);
+        stroke({ strokeStyle: '#808080' });
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -400,12 +421,8 @@ function Figure(mode) {
 // modes
 
 function addModeButton(name) {
-    let button = document.createElement('button')
-    button.innerHTML = name;
-    button.id = name;
+    let button = addButton(name, (event) => { toggleMode(button) })
     button.className = 'button_off';
-    button.onclick = (event) => { toggleMode(button) }
-    document.getElementById('buttons').appendChild(button);
     return button
 }
 
