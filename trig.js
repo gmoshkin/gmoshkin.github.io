@@ -8,7 +8,6 @@ canvas.onmousedown = (event) => { mouseDown = event.which; };
 canvas.onmouseup = (event) => { mouseDown = 0 };
 setInterval(redraw, 17);
 
-var mode = null;
 var lastButton = null;
 
 var lastEvent = null;
@@ -21,18 +20,21 @@ var selected = null;
 
 function redraw() {
     path.update();
-    circle.update();
-    line.update();
-    intersection.update();
-    if (mode === ball.button.id)
-        ball.update();
+    if (buttonIsOn(circle.button)) circle.update();
+    if (buttonIsOn(line.button)) {
+        line.update();
+        intersection.update();
+    }
+    if (buttonIsOn(ball.button)) ball.update();
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     path.draw();
     circle.draw();
-    line.draw();
-    intersection.draw();
+    if (buttonIsOn(line.button)) {
+        line.draw();
+        intersection.draw();
+    }
     ball.draw();
 }
 
@@ -45,7 +47,7 @@ path.update = function() {
     if (mouseDown) {
         this.updateSelectedPoint();
         // only add/remove points if in appropriate mode
-        if (mode === this.button.id) {
+        if (buttonIsOn(this.button)) {
             if (mouseDown === 1) {
                 if (this.nothingIsSelected()) {
                     this.points.push(mousePos);
@@ -91,18 +93,6 @@ Object.defineProperty(circle, 'radius', {
 circle.update = function() {
     if (mouseDown) {
         this.updateSelectedPoint();
-        // only add/remove points if in appropriate mode
-        if (mode === this.button.id) {
-            if (mouseDown === 1 && this.points.length < 2) {
-                if (this.nothingIsSelected()) {
-                    this.points.push(mousePos);
-                    this.selectPoint(this.points.length - 1);
-                }
-            } else if (mouseDown === 2 && this.selectedPoint() != null) {
-                remove(this.points, this.selectedPoint());
-                this.deselectPoint();
-            }
-        }
         // move selected point
         if (mouseDown === 1) {
             if (this.selectedPoint() != null) {
@@ -123,7 +113,8 @@ circle.draw = function() {
         ctx.arc(this.origin.x, this.origin.y, this.radius, 0, 2 * Math.PI);
         this.stroke();
     }
-    this.drawPoints();
+    if (buttonIsOn(this.button))
+        this.drawPoints();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -437,15 +428,11 @@ function addButton(name, onclick) {
 }
 
 function toggleMode(button) {
-    if (lastButton != null) lastButton.className = 'button_off';
-    if (lastButton === button) {
-        lastButton = null;
-        mode = null;
-    } else {
-        button.className = 'button_on';
-        lastButton = button;
-        mode = button.id;
-    }
+    button.className = buttonIsOn(button) ? 'button_off' : 'button_on'
+}
+
+function buttonIsOn(button) {
+    return button.className == 'button_on'
 }
 
 ////////////////////////////////////////////////////////////////////////////////
