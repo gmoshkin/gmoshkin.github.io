@@ -81,7 +81,10 @@ path.draw = function() {
 // circle
 
 const circle = new Figure('circle');
-circle.points = [{x: 350, y: 200}, {x: 500, y: 200}]
+circle.points = [
+    {x: canvas.width / 2, y: canvas.height / 2},
+    {x: canvas.width * 3/4, y: canvas.height / 2}
+]
 Object.defineProperty(circle, 'origin', { get() { return this.points[0] } })
 Object.defineProperty(circle, 'radius', {
     get() {
