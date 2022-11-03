@@ -281,8 +281,20 @@ intersection.update = function() {
     let x1 = (-b - sqrt(sqr(b) - 4 * a * c)) / 2 / a;
     if (line.start.x < x0 && x0 < line.end.x) {
         this.point = { x: x0, y: line.k * x0 + line.b }
-    } else {
+    } else if (line.start.x != line.end.x) {
         this.point = { x: x1, y: line.k * x1 + line.b }
+    } else {
+        // sqr(x - circle.origin.x) + sqr(y - circle.origin.y) == sqr(circle.radius)
+        let a = 1;
+        let b = - 2 * circle.origin.y;
+        let c = sqr(circle.origin.y) + sqr(line.start.x - circle.origin.x) - sqr(circle.radius);
+        let y0 = (-b + sqrt(sqr(b) - 4 * a * c)) / 2 / a;
+        let y1 = (-b - sqrt(sqr(b) - 4 * a * c)) / 2 / a;
+        if (line.start.y < y0 && y0 < line.end.y) {
+            this.point = { x: line.start.x, y: y0 }
+        } else {
+            this.point = { x: line.start.x, y: y1 }
+        }
     }
     this.radius.start = circle.origin;
     this.radius.end = this.point;
@@ -488,8 +500,13 @@ function drawPoint({x, y}, r, style) {
 
 function drawLine(obj) {
     ctx.beginPath();
-    ctx.moveTo(0, obj.b);
-    ctx.lineTo(canvas.width, obj.k * canvas.width + obj.b);
+    if (isFinite(obj.k)) {
+        ctx.moveTo(0, obj.b);
+        ctx.lineTo(canvas.width, obj.k * canvas.width + obj.b);
+    } else {
+        ctx.moveTo(obj.start.x, 0);
+        ctx.lineTo(obj.start.x, canvas.height);
+    }
     stroke(obj);
 }
 
