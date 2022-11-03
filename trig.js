@@ -129,29 +129,20 @@ circle.draw = function() {
 // line
 
 const line = new Figure('line');
-line.points = [{x: 320, y: 300}, {x: 500, y: 400}]
+line.start = {x: 320, y: 300}
+line.end = {x: 500, y: 400}
 line.lineDash = [3, 3];
-defineLineProperties(line, true);
+line.regularFillStyle = { byIndex: (i) => i == 0 ? 'black' : 'yellow' }
+defineLineProperties(line);
 
 line.update = function() {
     if (mouseDown) {
         this.updateSelectedPoint();
-        // only add/remove points if in appropriate mode
-        if (mode === this.button.id) {
-            if (mouseDown === 1 && this.points.length < 2) {
-                if (this.nothingIsSelected()) {
-                    this.points.push(mousePos);
-                    this.selectPoint(this.points.length - 1);
-                }
-            } else if (mouseDown === 2 && this.selectedPoint() != null) {
-                remove(this.points, this.selectedPoint());
-                this.deselectPoint();
-            }
-        }
         // move selected point
         if (mouseDown === 1) {
             if (this.selectedPoint() != null) {
-                this.points[this.selectedPoint()] = mousePos;
+                this.points[this.selectedPoint()].x = mousePos.x;
+                this.points[this.selectedPoint()].y = mousePos.y;
             }
         }
     } else {
@@ -167,15 +158,8 @@ line.draw = function() {
     this.drawPoints();
 }
 
-function defineLineProperties(line, ordered = false) {
-    if (ordered) {
-        Object.defineProperty(line, 'start', { get() {
-            return this.points[0].x < this.points[1].x ? this.points[0] : this.points[1]
-        } })
-        Object.defineProperty(line, 'end', { get() {
-            return this.points[0].x < this.points[1].x ? this.points[1] : this.points[0]
-        } })
-    }
+function defineLineProperties(line) {
+    Object.defineProperty(line, 'points', { get() { return [this.start, this.end] } })
     Object.defineProperty(line, 'k', { get() { return lineK(this) } })
     Object.defineProperty(line, 'b', { get() { return lineB(this) } })
 
@@ -275,12 +259,19 @@ ball.draw = function() {
 // intercetion
 
 const intersection = new Figure();
-intersection.points = []
 intersection.radius = new Figure();
 intersection.radius.lineDash = [1, 4];
 intersection.radius.strokeStyle = '#303030';
-intersection.radius.points = [circle.origin];
-defineLineProperties(intersection.radius, true);
+intersection.radius.start = circle.origin;
+intersection.display = {
+    lineAngle: addDebugField('lineAngle'),
+    lineK: addDebugField('lineK'),
+    radAngle: addDebugField('radAngle'),
+    radK: addDebugField('radK'),
+    reflAngle: addDebugField('reflAngle'),
+    reflK: addDebugField('reflK'),
+}
+defineLineProperties(intersection.radius);
 
 intersection.update = function() {
     let a = sqr(line.k) + 1;
@@ -289,28 +280,41 @@ intersection.update = function() {
     let x0 = (-b + sqrt(sqr(b) - 4 * a * c)) / 2 / a;
     let x1 = (-b - sqrt(sqr(b) - 4 * a * c)) / 2 / a;
     if (line.start.x < x0 && x0 < line.end.x) {
-        this.points[0] = { x: x0, y: line.k * x0 + line.b }
+        this.point = { x: x0, y: line.k * x0 + line.b }
     } else {
-        this.points[0] = { x: x1, y: line.k * x1 + line.b }
+        this.point = { x: x1, y: line.k * x1 + line.b }
     }
-    this.radius.points[0] = circle.origin;
-    this.radius.points[1] = this.points[0];
+    this.radius.start = circle.origin;
+    this.radius.end = this.point;
+    let radiusAngle = Math.atan(this.radius.k);
+    let lineAngle = Math.atan(line.k);
+    this.reflectionAngle = 2 * radiusAngle - lineAngle;
+    debugSetFloat2(this.display.lineAngle, 180 * lineAngle / Math.PI)
+    debugSetFloat2(this.display.radAngle, 180 * radiusAngle / Math.PI)
+    debugSetFloat2(this.display.reflAngle, 180 * this.reflectionAngle / Math.PI)
+    debugSetFloat2(this.display.lineK, line.k)
+    debugSetFloat2(this.display.radK, this.radius.k)
+    debugSetFloat2(this.display.reflK, Math.tan(this.reflectionAngle))
 }
 
 intersection.draw = function() {
     this.radius.drawLine();
-    if (!isNaN(this.points[0].x)) {
-        let radiusAngle = Math.atan(this.radius.k);
-        let lineAngle = Math.atan(line.k);
-        let reflectionAngle = 2 * radiusAngle - lineAngle;
-        let k = Math.tan(reflectionAngle);
-        let b = this.points[0].y - this.points[0].x * k;
+    if (!isNaN(this.point.x)) {
+        let k = Math.tan(this.reflectionAngle);
+        let b = this.point.y - this.point.x * k;
         ctx.beginPath();
         ctx.moveTo(0, b);
         ctx.lineTo(canvas.width, k * canvas.width + b);
         this.radius.stroke();
+
+        let reflectionLength = distance(line.start, line.end) - distance(line.start, this.point);
+        let reflectionPoint = {
+            x: this.point.x + Math.cos(this.reflectionAngle) * reflectionLength,
+            y: this.point.y + Math.sin(this.reflectionAngle) * reflectionLength,
+        }
+        drawPoint(reflectionPoint, 5, 'blue')
     }
-    this.drawPoints();
+    drawPoint(this.point, 5, this.regularFillStyle);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -366,10 +370,14 @@ function Figure(mode) {
     this.drawPoints = function() {
         for (let [i, {x, y}] of this.points.entries()) {
             if (i === this.hoverPoint) {
-                drawPoint(x, y, 8, this.hoverFillStyle);
+                drawPoint({x, y}, 8, this.hoverFillStyle);
             }
-            let style = (i === this.selectedPoint()) ? this.selectedFillStyle : this.regularFillStyle;
-            drawPoint(x, y, 5, style);
+            let style = (i === this.selectedPoint())
+                ? this.selectedFillStyle
+                : this.regularFillStyle.byIndex
+                    ? this.regularFillStyle.byIndex(i)
+                    : this.regularFillStyle;
+            drawPoint({x, y}, 5, style);
         }
     }
 
@@ -389,6 +397,18 @@ function addModeButton(name) {
     button.onclick = (event) => { toggleMode(button) }
     document.getElementById('buttons').appendChild(button);
     return button
+}
+
+function addDebugField(name) {
+    let field = document.createElement('field')
+    field.innerHTML = name + ': ';
+    field.id = name;
+    document.getElementById('debug').appendChild(field);
+    return field
+}
+
+function debugSetFloat2(field, float) {
+    field.innerHTML = field.id + ': ' + Math.floor(float * 100) / 100
 }
 
 function addButton(name, onclick) {
@@ -456,7 +476,7 @@ function getMousePos() {
     return { x: mouseX - canvasX, y: mouseY - canvasY }
 }
 
-function drawPoint(x, y, r, style) {
+function drawPoint({x, y}, r, style) {
     ctx.beginPath();
     ctx.arc(x, y, r, 0, 2 * Math.PI);
     if (style === undefined) {

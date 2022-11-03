@@ -3,13 +3,30 @@
         <div> text </div>
         <div id='buttons'></div>
         <br>
-        <canvas id="canvas"></canvas>
+        <main>
+            <canvas id="canvas"></canvas>
+            <debug id='debug'>
+                <field id='reflAngle'></field>
+                <field id='radAngle'></field>
+            </debug>
+        </main>
         <script src="trig.js"></script>
         <style>
             .button_off {
             }
             .button_on {
                 background: red;
+            }
+            field {
+                background: #c0c0c0;
+                padding: 2px;
+                display: block;
+            }
+            main {
+                display: flex;
+            }
+            debug {
+                margin: 4px;
             }
             body {
                 background: #808080;
