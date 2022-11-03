@@ -24,7 +24,8 @@ function redraw() {
     circle.update();
     line.update();
     intersection.update();
-    // ball.update();
+    if (mode === ball.button.id)
+        ball.update();
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -173,20 +174,29 @@ function defineLineProperties(line) {
 ////////////////////////////////////////////////////////////////////////////////
 // ball
 
-const ball = new Figure();
+const ball = new Figure('ball');
 ball.points = null;
-ball.pos = ball.orginPos = { x: circle.origin.x - 10, y: circle.origin.y + 30 }
+ball.nextPos = ball.pos = ball.orginPos = { x: circle.origin.x - 10, y: circle.origin.y + 30 }
 ball.radius = 10
-ball.orginVel = ball.vel = { x: 40, y: 20 }
-ball.velVal = sqrt(sqr(ball.orginVel.x) + sqr(ball.orginVel.y))
+ball.velVal = 4
+ball.velAngle = Math.PI / 6
+Object.defineProperty(ball, 'vel', { get() {
+    return {
+        x: ball.velVal * Math.cos(ball.velAngle),
+        y: ball.velVal * Math.sin(ball.velAngle)
+    }
+} })
 Object.defineProperty(ball, 'newPos', { get() {
     return addVec(this.pos, this.vel)
 } })
 Object.defineProperty(ball, 'dirVec', { get() {
     return { start: this.pos, end: this.newPos }
 } })
-ball.button = addButton('tick', () => { ball.update() })
+ball.tick = addButton('tick', () => { ball.update() })
 ball.adjust = null;
+ball.velValInput = document.getElementById("velVal")
+ball.velValInput.value = ball.velVal
+ball.velValInput.onchange = () => ball.velVal = eval(ball.velValInput.value)
 
 ball.update = function() {
     let newPos = addVec(this.pos, this.vel);
@@ -224,15 +234,19 @@ ball.update = function() {
             x: adjust.x - Math.cos(reflectAngle) * reflectLength,
             y: adjust.y - Math.sin(reflectAngle) * reflectLength
         }
-        this.adjust = adjust
-        this.reflect = reflect
-        this.pos = this.reflect
-        this.vel = {
-            x: -Math.cos(reflectAngle) * this.velVal,
-            y: -Math.sin(reflectAngle) * this.velVal,
+        if (distance(reflect, circle.origin) > circle.radius - this.radius) {
+            reflect = {
+                x: adjust.x + Math.cos(reflectAngle) * reflectLength,
+                y: adjust.y + Math.sin(reflectAngle) * reflectLength
+            }
+            this.velAngle = reflectAngle
+        } else {
+            this.velAngle = Math.PI + reflectAngle
         }
+        this.pos = reflect
     } else {
         this.pos = this.newPos
+        this.reflect = null
     }
 }
 
@@ -242,17 +256,7 @@ ball.draw = function() {
     stroke(this);
     ctx.beginPath();
     ctx.arc(this.newPos.x, this.newPos.y, this.radius, 0, 2 * Math.PI);
-    stroke(this);
-    if (this.adjust) {
-        ctx.beginPath();
-        ctx.arc(this.adjust.x, this.adjust.y, this.radius, 0, 2 * Math.PI);
-        stroke({ strokeStyle: 'red' });
-        drawLine({ k: this.reflectK, b: this.reflectB })
-
-        ctx.beginPath();
-        ctx.arc(this.reflect.x, this.reflect.y, this.radius, 0, 2 * Math.PI);
-        stroke({ strokeStyle: 'green' });
-    }
+    stroke({ strokeStyle: '#808080' });
 }
 
 ////////////////////////////////////////////////////////////////////////////////
