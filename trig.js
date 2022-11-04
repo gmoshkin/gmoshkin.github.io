@@ -2,6 +2,7 @@ const canvas = document.getElementById("canvas");
 canvas.width = 800;
 canvas.height = 600;
 const ctx = canvas.getContext("2d");
+const debugSection = document.getElementsByTagName('debug')[0];
 
 document.onmousemove = (event) => { lastEvent = event; mousePos = getMousePos() };
 canvas.onmousedown = (event) => { mouseDown = event.which; };
@@ -355,7 +356,7 @@ intersection.draw = function() {
 function Figure(mode) {
     this.points = [];
     this.hoverPoint = null;
-    this.button = mode && addModeButton(mode);
+    this.button = mode && addToggleButton(mode);
 
     this.hoverFillStyle = '#859900';
     this.selectedFillStyle = '#dc322f';
@@ -419,10 +420,23 @@ function Figure(mode) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// debug
+
+const debugToggleButton = addButton('debug', () => {
+    toggleButton(debugToggleButton)
+    if (buttonIsOn(debugToggleButton)) {
+        debugSection.style.display = ''
+    } else {
+        debugSection.style.display = 'none'
+    }
+});
+debugSection.style.display = 'none'
+
+////////////////////////////////////////////////////////////////////////////////
 // modes
 
-function addModeButton(name) {
-    let button = addButton(name, (event) => { toggleMode(button) })
+function addToggleButton(name) {
+    let button = addButton(name, (event) => { toggleButton(button) })
     button.className = 'button_off';
     return button
 }
@@ -431,7 +445,7 @@ function addDebugField(name) {
     let field = document.createElement('field')
     field.innerHTML = name + ': ';
     field.id = name;
-    document.getElementById('debug').appendChild(field);
+    debugSection.appendChild(field);
     return field
 }
 
@@ -448,7 +462,7 @@ function addButton(name, onclick) {
     return button
 }
 
-function toggleMode(button) {
+function toggleButton(button) {
     button.className = buttonIsOn(button) ? 'button_off' : 'button_on'
 }
 
