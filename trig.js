@@ -194,6 +194,7 @@ ball.ballGo = addButton('ball go', () => {
         ball.moveBall.className = 'button_off'
     }
 })
+ball.ballGo.className = 'button_on'
 ball.moveBall = addButton('move ball', () => {
     if (buttonIsOn(ball.moveBall)) {
         ball.moveBall.className = 'button_off'
@@ -267,7 +268,7 @@ ball.draw = function() {
     ctx.beginPath();
     ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
     stroke(this);
-    if (buttonIsOn(ball.ballGo)) {
+    if (buttonIsOn(ball.moveBall)) {
         ctx.beginPath();
         ctx.arc(this.newPos.x, this.newPos.y, this.radius, 0, 2 * Math.PI);
         stroke({ strokeStyle: '#808080' });
