@@ -82,17 +82,8 @@ path.draw = function() {
 // circle
 
 const circle = new Figure('circle');
-circle.points = [
-    {x: 400, y: 300},
-    {x: 600, y: 300}
-]
-Object.defineProperty(circle, 'origin', { get() { return this.points[0] } })
-Object.defineProperty(circle, 'radius', {
-    get() {
-        let [a, b] = this.points;
-        return Math.pow(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2), 1/2)
-    }
-})
+circle.origin = {x: 400, y: 300}
+circle.radius = 200
 
 circle.update = function() {
     if (mouseDown) {
@@ -112,13 +103,9 @@ circle.update = function() {
 }
 
 circle.draw = function() {
-    if (this.points.length == 2) {
-        ctx.beginPath();
-        ctx.arc(this.origin.x, this.origin.y, this.radius, 0, 2 * Math.PI);
-        this.stroke();
-    }
-    if (buttonIsOn(this.button))
-        this.drawPoints();
+    ctx.beginPath();
+    ctx.arc(this.origin.x, this.origin.y, this.radius, 0, 2 * Math.PI);
+    this.stroke();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
