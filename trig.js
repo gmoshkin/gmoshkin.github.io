@@ -21,6 +21,7 @@ var selected = null;
 
 function redraw() {
     path.update();
+    circle.update();
     if (buttonIsOn(line.button)) {
         line.update();
         intersection.update();
@@ -36,6 +37,42 @@ function redraw() {
         intersection.draw();
     }
     ball.draw();
+    touch.draw();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// touch
+
+const touch = new Figure('touch');
+touch.start = { x: NaN, y: NaN }
+touch.end = { x: NaN, y: NaN }
+
+canvas.addEventListener('touchstart', (e) => {
+    let { left: canvasX, top: canvasY } = canvas.getBoundingClientRect()
+    let { clientX, clientY } = e.changedTouches[0];
+    circle.prevOrigin = {...circle.origin}
+    touch.end = touch.start = { x: clientX - canvasX, y: clientY - canvasY }
+})
+
+canvas.addEventListener('touchend', (e) => {
+    touch.start = { x: NaN, y: NaN }
+    touch.end = { x: NaN, y: NaN }
+    circle.prevOrigin = null
+})
+
+canvas.addEventListener('touchmove', (e) => {
+    let { left: canvasX, top: canvasY } = canvas.getBoundingClientRect()
+    let { clientX, clientY } = e.changedTouches[0];
+    touch.end = {
+        x: clientX - canvasX,
+        y: clientY - canvasY,
+    }
+})
+
+touch.draw = function() {
+    drawLineSegment(this)
+    drawPoint(this.start, 5)
+    drawPoint(this.end, 5)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -83,6 +120,12 @@ path.draw = function() {
 const circle = new Figure();
 circle.origin = {x: 400, y: 300}
 circle.radius = 200
+circle.prevOrigin = null
+
+circle.update = function() {
+    if (!this.prevOrigin) return
+    this.origin = addVec(circle.prevOrigin, subVec(touch.end, touch.start))
+}
 
 circle.draw = function() {
     ctx.beginPath();
@@ -449,6 +492,8 @@ function addVec(a, b) {
     return { x: a.x + b.x, y: a.y + b.y }
 }
 
+function subVec(a, b) { return { x: a.x - b.x, y: a.y - b.y } }
+
 function distance(a, b) {
     return sqrt(sqr(a.x - b.x) + sqr(a.y - b.y))
 }
@@ -502,6 +547,13 @@ function drawLine(obj) {
         ctx.moveTo(obj.start.x, 0);
         ctx.lineTo(obj.start.x, canvas.height);
     }
+    stroke(obj);
+}
+
+function drawLineSegment(obj) {
+    ctx.beginPath();
+    ctx.moveTo(obj.start.x, obj.start.y);
+    ctx.lineTo(obj.end.x, obj.end.y);
     stroke(obj);
 }
 
