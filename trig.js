@@ -1,7 +1,5 @@
 const canvas = document.getElementById("canvas");
 const body = document.getElementsByTagName('body')[0]
-resizeCanvas(canvas)
-window.onresize = () => resizeCanvas(canvas)
 
 const ctx = canvas.getContext("2d");
 const debugSection = document.getElementsByTagName('debug')[0];
@@ -23,7 +21,6 @@ var selected = null;
 
 function redraw() {
     path.update();
-    circle.update()
     if (buttonIsOn(line.button)) {
         line.update();
         intersection.update();
@@ -111,13 +108,6 @@ const circle = new Figure();
 circle.origin = {x: 400, y: 300}
 circle.radius = 200
 circle.prevOrigin = null
-
-circle.update = function() {
-    this.origin = {
-        x: canvas.width / 2,
-        y: canvas.height / 2,
-    }
-}
 
 circle.draw = function() {
     ctx.beginPath();
@@ -475,6 +465,25 @@ function buttonIsOn(button) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// window size
+
+resizeCanvas(canvas)
+window.onresize = () => resizeCanvas(canvas)
+window.onload = () => resizeCanvas(canvas)
+
+function resizeCanvas(canvas) {
+    let { top } = canvas.getBoundingClientRect()
+    let margin = window.getComputedStyle(body).margin
+    margin = margin.substr(0, margin.length - 2)
+    canvas.width = window.innerWidth - margin * 2
+    canvas.height = window.innerHeight - top - margin
+    circle.origin = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // util
 
 function sqr(x) { return Math.pow(x, 2) }
@@ -553,12 +562,4 @@ function stroke(obj) {
     ctx.strokeStyle = obj.strokeStyle || '#000000';
     ctx.setLineDash(obj.lineDash || []);
     ctx.stroke();
-}
-
-function resizeCanvas(canvas) {
-    let { top } = canvas.getBoundingClientRect()
-    let margin = window.getComputedStyle(body).margin
-    margin = margin.substr(0, margin.length - 2)
-    canvas.width = window.innerWidth - margin * 2
-    canvas.height = window.innerHeight - top - margin
 }
