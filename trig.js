@@ -21,7 +21,6 @@ var selected = null;
 
 function redraw() {
     path.update();
-    circle.update();
     if (buttonIsOn(line.button)) {
         line.update();
         intersection.update();
@@ -37,43 +36,31 @@ function redraw() {
         intersection.draw();
     }
     ball.draw();
-    touch.draw();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // touch
 
-const touch = new Figure('touch');
-touch.start = { x: NaN, y: NaN }
-touch.end = { x: NaN, y: NaN }
+touch = {
+    start: { x: NaN, y: NaN },
+    end: { x: NaN, y: NaN },
+}
 
 canvas.addEventListener('touchstart', (e) => {
-    let { left: canvasX, top: canvasY } = canvas.getBoundingClientRect()
     let { clientX, clientY } = e.changedTouches[0];
     circle.prevOrigin = {...circle.origin}
-    touch.end = touch.start = { x: clientX - canvasX, y: clientY - canvasY }
+    touch.end = touch.start = { x: clientX, y: clientY }
 })
 
 canvas.addEventListener('touchend', (e) => {
-    touch.start = { x: NaN, y: NaN }
-    touch.end = { x: NaN, y: NaN }
+    touch.end = touch.start = { x: NaN, y: NaN }
     circle.prevOrigin = null
 })
 
 canvas.addEventListener('touchmove', (e) => {
-    let { left: canvasX, top: canvasY } = canvas.getBoundingClientRect()
-    let { clientX, clientY } = e.changedTouches[0];
-    touch.end = {
-        x: clientX - canvasX,
-        y: clientY - canvasY,
-    }
+    let { clientX: x, clientY: y } = e.changedTouches[0];
+    circle.origin = addVec(circle.prevOrigin, subVec({x, y}, touch.start))
 })
-
-touch.draw = function() {
-    drawLineSegment(this)
-    drawPoint(this.start, 5)
-    drawPoint(this.end, 5)
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // path
@@ -121,11 +108,6 @@ const circle = new Figure();
 circle.origin = {x: 400, y: 300}
 circle.radius = 200
 circle.prevOrigin = null
-
-circle.update = function() {
-    if (!this.prevOrigin) return
-    this.origin = addVec(circle.prevOrigin, subVec(touch.end, touch.start))
-}
 
 circle.draw = function() {
     ctx.beginPath();
