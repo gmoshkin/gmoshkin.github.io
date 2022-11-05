@@ -21,7 +21,6 @@ var selected = null;
 
 function redraw() {
     path.update();
-    if (buttonIsOn(circle.button)) circle.update();
     if (buttonIsOn(line.button)) {
         line.update();
         intersection.update();
@@ -81,26 +80,9 @@ path.draw = function() {
 ////////////////////////////////////////////////////////////////////////////////
 // circle
 
-const circle = new Figure('circle');
+const circle = new Figure();
 circle.origin = {x: 400, y: 300}
 circle.radius = 200
-
-circle.update = function() {
-    if (mouseDown) {
-        this.updateSelectedPoint();
-        // move selected point
-        if (mouseDown === 1) {
-            if (this.selectedPoint() != null) {
-                this.points[this.selectedPoint()] = mousePos;
-            }
-        }
-    } else {
-        this.hoverPoint = this.getPointIdxUnderMouse();
-        if (this.selectedPoint() != null) {
-            this.deselectPoint();
-        }
-    }
-}
 
 circle.draw = function() {
     ctx.beginPath();
