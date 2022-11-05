@@ -26,6 +26,7 @@ function redraw() {
         intersection.update();
     }
     if (buttonIsOn(ball.ballGo)) ball.update();
+    circle.update()
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -108,6 +109,18 @@ const circle = new Figure();
 circle.origin = {x: 400, y: 300}
 circle.radius = 200
 circle.prevOrigin = null
+
+circle.update = function() {
+    if (mouseDown === 1) {
+        if (!this.prevOrigin) {
+            this.prevOrigin = {...this.origin}
+            this.moveStart = getMousePos()
+        }
+        this.origin = addVec(this.prevOrigin, subVec(getMousePos(), this.moveStart))
+    } else {
+        this.prevOrigin = null
+    }
+}
 
 circle.draw = function() {
     ctx.beginPath();
