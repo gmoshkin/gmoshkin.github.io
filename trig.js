@@ -178,7 +178,7 @@ function defineLineProperties(line) {
 
 const ball = new Figure();
 ball.points = null;
-ball.nextPos = ball.pos = ball.orginPos = { x: circle.origin.x - 10, y: circle.origin.y + 30 }
+ball.pos = ball.orginPos = { x: circle.origin.x - 10, y: circle.origin.y + 30 }
 ball.radius = 10
 ball.velVal = 4
 ball.velAngle = Math.PI / 6
@@ -194,6 +194,15 @@ Object.defineProperty(ball, 'newPos', { get() {
 Object.defineProperty(ball, 'dirVec', { get() {
     return { start: this.pos, end: this.newPos }
 } })
+ball.respawnBall = addButton('respawn ball', () => {
+    let angle = Math.random() * Math.PI * 2
+    let radius = Math.random() * (circle.radius - ball.radius)
+    ball.pos = {
+        x: circle.origin.x + radius * Math.cos(angle),
+        y: circle.origin.y + radius * Math.sin(angle),
+    }
+    ball.velAngle = angle + Math.PI / 6
+})
 ball.ballGo = addButton('ball go', () => {
     if (buttonIsOn(ball.ballGo)) {
         ball.ballGo.className = 'button_off'
