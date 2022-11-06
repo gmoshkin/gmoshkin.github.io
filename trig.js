@@ -57,7 +57,6 @@ canvas.addEventListener('touchstart', (e) => {
 
 canvas.addEventListener('touchend', (e) => {
     touch.end = touch.start = { x: NaN, y: NaN }
-    circle.prevOrigin = null
 })
 
 canvas.addEventListener('touchmove', (e) => {
@@ -114,17 +113,15 @@ circle.prevOrigin = null
 
 circle.update = function() {
     if (mouseDown === 1) {
-        if (!selected)
+        if (!selected) {
             selected = { figure: this }
-        else if (selected.figure !== this)
-            return
-        if (!this.prevOrigin) {
             this.prevOrigin = {...this.origin}
             this.moveStart = getMousePos()
+        } else if (selected.figure !== this) {
+            return
         }
         this.origin = addVec(this.prevOrigin, subVec(getMousePos(), this.moveStart))
     } else {
-        this.prevOrigin = null
         if (selected && selected.figure === this)
             selected = null
     }
