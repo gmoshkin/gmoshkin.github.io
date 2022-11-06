@@ -143,7 +143,7 @@ const line = new Figure('line');
 line.start = {x: 320, y: 300}
 line.end = {x: 500, y: 400}
 line.lineDash = [3, 3];
-line.regularFillStyle = { byIndex: (i) => i == 0 ? 'black' : 'yellow' }
+line.regularFillStyle = { byIndex: (i) => i == 0 ? 'green' : 'yellow' }
 defineLineProperties(line);
 
 line.update = function() {
@@ -245,18 +245,21 @@ ball.update = function() {
         let c = sqr(circle.origin.x) + sqr(dirVec.b - circle.origin.y) - sqr(circle.radius - this.radius);
         let x0 = (-b + sqrt(sqr(b) - 4 * a * c)) / 2 / a;
         let x1 = (-b - sqrt(sqr(b) - 4 * a * c)) / 2 / a;
-        let x0Err = Math.abs(x0 - this.pos.x)
-        let x1Err = Math.abs(x1 - this.pos.x)
-        let y0 = dirVec.k * x0 + dirVec.b
-        let y1 = dirVec.k * x1 + dirVec.b
-        if (x0Err < x1Err) {
-            adjust = { x: x0, y: y0 }
-        } else if (x0Err > x1Err) {
-            adjust = { x: x1, y: y1 }
-        } else if (Math.abs(y0 - this.pos.y) < Math.abs(y1 - this.pos.y)) {
-            adjust = { x: x0, y: y0 }
+        if ((this.pos.x - x0) * (this.pos.x - newPos.x) > 0) {
+            adjust = { x: x0, y: dirVec.k * x0 + dirVec.b }
+        } else if (this.pos.x != newPos.x) {
+            adjust = { x: x1, y: dirVec.k * x1 + dirVec.b }
         } else {
-            adjust = { x: x1, y: y1 }
+            // sqr(x - circle.origin.x) + sqr(y - circle.origin.y) == sqr(circle.radius)
+            let b = - 2 * circle.origin.y;
+            let c = sqr(circle.origin.y) + sqr(this.pos.x - circle.origin.x) - sqr(circle.radius);
+            let y0 = (-b + sqrt(sqr(b) - 4 * c)) / 2;
+            let y1 = (-b - sqrt(sqr(b) - 4 * c)) / 2;
+            if ((this.pos.y - y0) * (this.pos.y - newPos.y) > 0) {
+                adjust = { x: this.pos.x, y: y0 }
+            } else {
+                adjust = { x: this.pos.x, y: y1 }
+            }
         }
         let radiusAngle = lineAngle({ start: circle.origin, end: adjust })
         let reflectAngle = 2 * radiusAngle - lineAngle(dirVec) - Math.PI
@@ -267,29 +270,18 @@ ball.update = function() {
             x: adjust.x - Math.cos(reflectAngle) * reflectLength,
             y: adjust.y - Math.sin(reflectAngle) * reflectLength
         }
-        if (distance(reflect, circle.origin) > circle.radius - this.radius) {
-            reflect = {
-                x: adjust.x + Math.cos(reflectAngle) * reflectLength,
-                y: adjust.y + Math.sin(reflectAngle) * reflectLength
-            }
-            this.velAngle = reflectAngle
-        } else {
-            this.velAngle = Math.PI + reflectAngle
-        }
+        // if (distance(reflect, circle.origin) > circle.radius - this.radius) {
+        //     reflect = {
+        //         x: adjust.x + Math.cos(reflectAngle) * reflectLength,
+        //         y: adjust.y + Math.sin(reflectAngle) * reflectLength
+        //     }
+        //     this.velAngle = reflectAngle
+        // } else {
+        //     this.velAngle = Math.PI + reflectAngle
+        // }
         this.pos = reflect
         if (!this.debug && !isFinite(this.pos.x)) {
-            this.debug = {
-                a,
-                b,
-                c,
-                x0,
-                x1,
-                x0Err,
-                x1Err,
-                y0,
-                y1,
-                dirVec,
-            }
+            this.debug = { a, b, c, x0, x1, x0Err, x1Err, y0, y1, dirVec }
             this.debug.originToBall = subVec(dirVec.start, circle.origin)
             let offsetLen = vecNorm(this.debug.originToBall) - this.radius - circle.radius
             let offsetDir = vecTimes(this.debug.originToBall, 1/vecNorm(this.debug.originToBall))
@@ -319,7 +311,7 @@ ball.draw = function() {
     ctx.beginPath();
     ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
     stroke(this);
-    if (buttonIsOn(ball.moveBall)) {
+    if (!buttonIsOn(ball.ballGo)) {
         ctx.beginPath();
         ctx.arc(this.newPos.x, this.newPos.y, this.radius, 0, 2 * Math.PI);
         stroke({ strokeStyle: '#808080' });
