@@ -5,7 +5,9 @@ const ctx = canvas.getContext("2d");
 const debugSection = document.getElementsByTagName('debug')[0];
 
 document.onmousemove = (event) => { lastEvent = event; mousePos = getMousePos() };
-canvas.onmousedown = (event) => { mouseDown = event.which; };
+// BUG: first thing after load first click then move the mouse and the circle
+// jumps a lot
+canvas.onmousedown = (event) => { mouseDown = event.which; mousePos = convertMousePos(event) };
 canvas.onmouseup = (event) => { mouseDown = 0 };
 setInterval(redraw, 17);
 
@@ -194,15 +196,7 @@ Object.defineProperty(ball, 'newPos', { get() {
 Object.defineProperty(ball, 'dirVec', { get() {
     return { start: this.pos, end: this.newPos }
 } })
-ball.respawnBall = addButton('respawn ball', () => {
-    let angle = Math.random() * Math.PI * 2
-    let radius = Math.random() * (circle.radius - ball.radius)
-    ball.pos = {
-        x: circle.origin.x + radius * Math.cos(angle),
-        y: circle.origin.y + radius * Math.sin(angle),
-    }
-    ball.velAngle = angle + Math.PI / 6
-})
+ball.respawnBall = addButton('respawn ball', () => ball.respawn())
 ball.ballGo = addButton('ball go', () => {
     if (buttonIsOn(ball.ballGo)) {
         ball.ballGo.className = 'button_off'
@@ -225,8 +219,14 @@ ball.adjust = null;
 ball.velValInput = document.getElementById("velVal")
 ball.velValInput.value = ball.velVal
 ball.velValInput.onchange = () => ball.velVal = eval(ball.velValInput.value)
+ball.debug = null
 
 ball.update = function() {
+    if (distance(this.pos, circle.origin) + this.radius > circle.radius) {
+        let originToBall = subVec(this.pos, circle.origin)
+        let offsetDir = vecTimes(originToBall, 1/vecNorm(originToBall))
+        this.pos = addVec(circle.origin, vecTimes(offsetDir, circle.radius - this.radius))
+    }
     let newPos = addVec(this.pos, this.vel);
     let dirVec = { start: this.pos, end: newPos }
     defineLineProperties(dirVec)
@@ -257,7 +257,7 @@ ball.update = function() {
         let reflectAngle = 2 * radiusAngle - lineAngle
         this.reflectK = Math.tan(reflectAngle);
         this.reflectB = adjust.y - adjust.x * this.reflectK;
-        let reflectLength = length(dirVec) - distance(this.pos, adjust)
+        let reflectLength = segmentLength(dirVec) - distance(this.pos, adjust)
         reflect = {
             x: adjust.x - Math.cos(reflectAngle) * reflectLength,
             y: adjust.y - Math.sin(reflectAngle) * reflectLength
@@ -272,6 +272,24 @@ ball.update = function() {
             this.velAngle = Math.PI + reflectAngle
         }
         this.pos = reflect
+        if (!this.debug && !isFinite(this.pos.x)) {
+            this.debug = {
+                a,
+                b,
+                c,
+                x0,
+                x1,
+                x0Err,
+                x1Err,
+                y0,
+                y1,
+                dirVec,
+            }
+            this.debug.originToBall = subVec(dirVec.start, circle.origin)
+            let offsetLen = vecNorm(this.debug.originToBall) - this.radius - circle.radius
+            let offsetDir = vecTimes(this.debug.originToBall, 1/vecNorm(this.debug.originToBall))
+            this.debug.adjust = subVec(dirVec.start, vecTimes(offsetDir, offsetLen))
+        }
     } else {
         this.pos = this.newPos
         this.reflect = null
@@ -281,6 +299,17 @@ ball.updateMove = function() {
 
 }
 
+ball.respawn = function() {
+    let angle = Math.random() * Math.PI * 2
+    let radius = Math.random() * (circle.radius - this.radius)
+    this.pos = {
+        x: circle.origin.x + radius * Math.cos(angle),
+        y: circle.origin.y + radius * Math.sin(angle),
+    }
+    this.velAngle = angle + Math.PI / 6
+}
+ball.respawn()
+
 ball.draw = function() {
     ctx.beginPath();
     ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
@@ -289,6 +318,12 @@ ball.draw = function() {
         ctx.beginPath();
         ctx.arc(this.newPos.x, this.newPos.y, this.radius, 0, 2 * Math.PI);
         stroke({ strokeStyle: '#808080' });
+    }
+    if (this.debug) {
+        strokeBall(this.debug.dirVec.start, this.radius, 'blue')
+        strokeBall(this.debug.dirVec.end, this.radius, 'yellow')
+        if (this.debug.adjust)
+            strokeBall(this.debug.adjust, this.radius, 'red')
     }
 }
 
@@ -466,7 +501,11 @@ function addDebugField(name) {
 }
 
 function debugSetFloat2(field, float) {
-    field.innerHTML = field.id + ': ' + Math.floor(float * 100) / 100
+    field.innerHTML = field.id + ': ' + float2(float)
+}
+
+function float2(float) {
+    return Math.floor(float * 100) / 100
 }
 
 function addButton(name, onclick) {
@@ -521,8 +560,14 @@ function distance(a, b) {
     return sqrt(sqr(a.x - b.x) + sqr(a.y - b.y))
 }
 
-function length({ start, end }) {
+function vecNorm({x, y}) { return distance({x, y}, {x: 0, y: 0}) }
+
+function segmentLength({ start, end }) {
     return distance(start, end)
+}
+
+function vecTimes({x, y}, v) {
+    return {x: x * v, y: y * v}
 }
 
 function lineK({ start, end }) {
@@ -546,9 +591,12 @@ function remove(arr, i) {
 
 function getMousePos() {
     if (lastEvent === null) return { x: -1, y: -1 };
+    return convertMousePos(lastEvent)
+}
+
+function convertMousePos({clientX, clientY}) {
     let { x: canvasX, y: canvasY } = canvas.getBoundingClientRect();
-    let { clientX: mouseX, clientY: mouseY } = lastEvent;
-    return { x: mouseX - canvasX, y: mouseY - canvasY }
+    return { x: clientX - canvasX, y: clientY - canvasY }
 }
 
 function drawPoint({x, y}, r, style) {
@@ -559,6 +607,12 @@ function drawPoint({x, y}, r, style) {
     }
     ctx.fillStyle = style;
     ctx.fill();
+}
+
+function strokeBall({x, y}, r, style) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, 2 * Math.PI);
+    stroke({strokeStyle: style})
 }
 
 function drawLine(obj) {
