@@ -114,6 +114,10 @@ circle.prevOrigin = null
 
 circle.update = function() {
     if (mouseDown === 1) {
+        if (!selected)
+            selected = { figure: this }
+        else if (selected.figure !== this)
+            return
         if (!this.prevOrigin) {
             this.prevOrigin = {...this.origin}
             this.moveStart = getMousePos()
@@ -121,6 +125,8 @@ circle.update = function() {
         this.origin = addVec(this.prevOrigin, subVec(getMousePos(), this.moveStart))
     } else {
         this.prevOrigin = null
+        if (selected && selected.figure === this)
+            selected = null
     }
 }
 
