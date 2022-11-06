@@ -220,12 +220,16 @@ ball.moveBall = addButton('move ball', () => {
         ball.ballGo.className = 'button_off'
     }
 })
+ball.ballTrail = addButton('ball trail', () => toggleButton(ball.ballTrail))
 ball.tick = addButton('tick', () => { ball.update() })
 ball.adjust = null;
 ball.velValInput = document.getElementById("velVal")
 ball.velValInput.value = ball.velVal
 ball.velValInput.onchange = () => ball.velVal = eval(ball.velValInput.value)
 ball.debug = null
+ball.trail = []
+ball.trailLength = 1000
+ball.currTrailIdx = 0
 
 ball.getNextPos = function() {
     let curPos = this.pos
@@ -283,6 +287,15 @@ ball.getNextPos = function() {
 }
 
 ball.update = function() {
+    if (buttonIsOn(this.ballTrail)) {
+        this.trail[this.currTrailIdx] = {...this.pos}
+        if (++this.currTrailIdx == this.trailLength) {
+            this.currTrailIdx = 0
+        }
+    } else {
+        this.trail.length = 0
+        this.currTrailIdx = 0
+    }
     this.pos = this.getNextPos()
 }
 
@@ -302,6 +315,24 @@ ball.respawn = function() {
 ball.respawn()
 
 ball.draw = function() {
+    if (buttonIsOn(this.ballTrail) && this.trail.length > 0) {
+        ctx.beginPath()
+        let start = this.currTrailIdx
+        if (start >= this.trail.length) start = 0
+        ctx.moveTo(this.trail[start].x, this.trail[start].y)
+        for (let i = start + 1; i < this.trail.length; i++) {
+            let {x, y} = this.trail[i];
+            ctx.lineTo(x, y);
+        }
+        for (let i = 0; i < start; i++) {
+            let {x, y} = this.trail[i];
+            ctx.lineTo(x, y);
+        }
+        stroke({ strokeStyle: '#666666' });
+        // ctx.beginPath()
+        // ctx.arc(this.trail[start].x, this.trail[start].y, 2, 0, 2 * Math.PI)
+        // stroke({ strokeStyle: 'blue' });
+    }
     ctx.beginPath();
     ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
     stroke(this);
