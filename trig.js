@@ -227,17 +227,16 @@ ball.velValInput.value = ball.velVal
 ball.velValInput.onchange = () => ball.velVal = eval(ball.velValInput.value)
 ball.debug = null
 
-ball.update = function() {
-    if (distance(this.pos, circle.origin) + this.radius > circle.radius) {
-        let originToBall = subVec(this.pos, circle.origin)
+ball.getNextPos = function() {
+    let curPos = this.pos
+    if (distance(curPos, circle.origin) + this.radius > circle.radius) {
+        let originToBall = subVec(curPos, circle.origin)
         let offsetDir = vecTimes(originToBall, 1/vecNorm(originToBall))
-        this.pos = addVec(circle.origin, vecTimes(offsetDir, circle.radius - this.radius))
+        curPos = addVec(circle.origin, vecTimes(offsetDir, circle.radius - this.radius))
     }
-    let newPos = addVec(this.pos, this.vel);
-    let dirVec = { start: this.pos, end: newPos }
+    let newPos = addVec(curPos, this.vel);
+    let dirVec = { start: curPos, end: newPos }
     defineLineProperties(dirVec)
-    let adjust = null;
-    let reflect = null
     if (distance(newPos, circle.origin) + this.radius > circle.radius) {
         // TODO
         let a = sqr(dirVec.k) + 1;
@@ -245,53 +244,48 @@ ball.update = function() {
         let c = sqr(circle.origin.x) + sqr(dirVec.b - circle.origin.y) - sqr(circle.radius - this.radius);
         let x0 = (-b + sqrt(sqr(b) - 4 * a * c)) / 2 / a;
         let x1 = (-b - sqrt(sqr(b) - 4 * a * c)) / 2 / a;
-        if ((this.pos.x - x0) * (this.pos.x - newPos.x) > 0) {
+        let adjust = null;
+        if ((curPos.x - x0) * (curPos.x - newPos.x) > 0) {
             adjust = { x: x0, y: dirVec.k * x0 + dirVec.b }
-        } else if (this.pos.x != newPos.x) {
+        } else if (curPos.x != newPos.x) {
             adjust = { x: x1, y: dirVec.k * x1 + dirVec.b }
         } else {
             // sqr(x - circle.origin.x) + sqr(y - circle.origin.y) == sqr(circle.radius)
             let b = - 2 * circle.origin.y;
-            let c = sqr(circle.origin.y) + sqr(this.pos.x - circle.origin.x) - sqr(circle.radius);
+            let c = sqr(circle.origin.y) + sqr(curPos.x - circle.origin.x) - sqr(circle.radius);
             let y0 = (-b + sqrt(sqr(b) - 4 * c)) / 2;
             let y1 = (-b - sqrt(sqr(b) - 4 * c)) / 2;
-            if ((this.pos.y - y0) * (this.pos.y - newPos.y) > 0) {
-                adjust = { x: this.pos.x, y: y0 }
+            if ((curPos.y - y0) * (curPos.y - newPos.y) > 0) {
+                adjust = { x: curPos.x, y: y0 }
             } else {
-                adjust = { x: this.pos.x, y: y1 }
+                adjust = { x: curPos.x, y: y1 }
             }
         }
         let radiusAngle = lineAngle({ start: circle.origin, end: adjust })
         let reflectAngle = 2 * radiusAngle - lineAngle(dirVec) - Math.PI
-        this.reflectK = Math.tan(reflectAngle);
-        this.reflectB = adjust.y - adjust.x * this.reflectK;
-        let reflectLength = segmentLength(dirVec) - distance(this.pos, adjust)
-        reflect = {
-            x: adjust.x - Math.cos(reflectAngle) * reflectLength,
-            y: adjust.y - Math.sin(reflectAngle) * reflectLength
+        let reflectLength = segmentLength(dirVec) - distance(curPos, adjust)
+        let reflect = {
+            x: adjust.x + Math.cos(reflectAngle) * reflectLength,
+            y: adjust.y + Math.sin(reflectAngle) * reflectLength
         }
-        // if (distance(reflect, circle.origin) > circle.radius - this.radius) {
-        //     reflect = {
-        //         x: adjust.x + Math.cos(reflectAngle) * reflectLength,
-        //         y: adjust.y + Math.sin(reflectAngle) * reflectLength
-        //     }
-        //     this.velAngle = reflectAngle
-        // } else {
-        //     this.velAngle = Math.PI + reflectAngle
-        // }
-        this.pos = reflect
-        if (!this.debug && !isFinite(this.pos.x)) {
+        this.velAngle = reflectAngle
+        if (!this.debug && !isFinite(reflect.x)) {
             this.debug = { a, b, c, x0, x1, x0Err, x1Err, y0, y1, dirVec }
             this.debug.originToBall = subVec(dirVec.start, circle.origin)
             let offsetLen = vecNorm(this.debug.originToBall) - this.radius - circle.radius
             let offsetDir = vecTimes(this.debug.originToBall, 1/vecNorm(this.debug.originToBall))
             this.debug.adjust = subVec(dirVec.start, vecTimes(offsetDir, offsetLen))
         }
+        return reflect
     } else {
-        this.pos = this.newPos
-        this.reflect = null
+        return newPos
     }
 }
+
+ball.update = function() {
+    this.pos = this.getNextPos()
+}
+
 ball.updateMove = function() {
 
 }
@@ -312,8 +306,9 @@ ball.draw = function() {
     ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
     stroke(this);
     if (!buttonIsOn(ball.ballGo)) {
+        let nextPos = this.getNextPos()
         ctx.beginPath();
-        ctx.arc(this.newPos.x, this.newPos.y, this.radius, 0, 2 * Math.PI);
+        ctx.arc(nextPos.x, nextPos.y, this.radius, 0, 2 * Math.PI);
         stroke({ strokeStyle: '#808080' });
     }
     if (this.debug) {
