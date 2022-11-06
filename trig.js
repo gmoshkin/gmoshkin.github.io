@@ -5,9 +5,9 @@ const ctx = canvas.getContext("2d");
 const debugSection = document.getElementsByTagName('debug')[0];
 
 document.onmousemove = (event) => { lastEvent = event; mousePos = getMousePos() };
-// BUG: first thing after load first click then move the mouse and the circle
-// jumps a lot
-canvas.onmousedown = (event) => { mouseDown = event.which; mousePos = convertMousePos(event) };
+canvas.onmousedown = (event) => {
+    mouseDown = event.which; mousePos = convertMousePos(lastEvent = event)
+};
 canvas.onmouseup = (event) => { mouseDown = 0 };
 setInterval(redraw, 17);
 
