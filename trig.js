@@ -258,9 +258,8 @@ ball.update = function() {
         } else {
             adjust = { x: x1, y: y1 }
         }
-        let radiusAngle = Math.atan(lineK({ start: circle.origin, end: adjust }))
-        let lineAngle = Math.atan(lineK(dirVec))
-        let reflectAngle = 2 * radiusAngle - lineAngle
+        let radiusAngle = lineAngle({ start: circle.origin, end: adjust })
+        let reflectAngle = 2 * radiusAngle - lineAngle(dirVec) - Math.PI
         this.reflectK = Math.tan(reflectAngle);
         this.reflectB = adjust.y - adjust.x * this.reflectK;
         let reflectLength = segmentLength(dirVec) - distance(this.pos, adjust)
@@ -357,7 +356,7 @@ intersection.update = function() {
     let c = sqr(circle.origin.x) + sqr(line.b - circle.origin.y) - sqr(circle.radius);
     let x0 = (-b + sqrt(sqr(b) - 4 * a * c)) / 2 / a;
     let x1 = (-b - sqrt(sqr(b) - 4 * a * c)) / 2 / a;
-    if (line.start.x < x0 && x0 < line.end.x) {
+    if ((line.start.x - x0) * (line.start.x - line.end.x) > 0) {
         this.point = { x: x0, y: line.k * x0 + line.b }
     } else if (line.start.x != line.end.x) {
         this.point = { x: x1, y: line.k * x1 + line.b }
@@ -368,7 +367,7 @@ intersection.update = function() {
         let c = sqr(circle.origin.y) + sqr(line.start.x - circle.origin.x) - sqr(circle.radius);
         let y0 = (-b + sqrt(sqr(b) - 4 * a * c)) / 2 / a;
         let y1 = (-b - sqrt(sqr(b) - 4 * a * c)) / 2 / a;
-        if (line.start.y < y0 && y0 < line.end.y) {
+        if ((line.start.y - y0) * (line.start.y - line.end.y) > 0) {
             this.point = { x: line.start.x, y: y0 }
         } else {
             this.point = { x: line.start.x, y: y1 }
@@ -376,15 +375,20 @@ intersection.update = function() {
     }
     this.radius.start = circle.origin;
     this.radius.end = this.point;
-    let radiusAngle = Math.atan(this.radius.k);
-    let lineAngle = Math.atan(line.k);
-    this.reflectionAngle = 2 * radiusAngle - lineAngle;
-    debugSetFloat2(this.display.lineAngle, 180 * lineAngle / Math.PI)
+    let radiusAngle = lineAngle(this.radius);
+    let lineAngl = lineAngle(line);
+    this.reflectionAngle = 2 * radiusAngle - lineAngl - Math.PI;
+    debugSetFloat2(this.display.lineAngle, 180 * lineAngl / Math.PI)
     debugSetFloat2(this.display.radAngle, 180 * radiusAngle / Math.PI)
     debugSetFloat2(this.display.reflAngle, 180 * this.reflectionAngle / Math.PI)
     debugSetFloat2(this.display.lineK, line.k)
     debugSetFloat2(this.display.radK, this.radius.k)
     debugSetFloat2(this.display.reflK, Math.tan(this.reflectionAngle))
+    this.reflectionLength = distance(line.start, line.end) - distance(line.start, this.point);
+    this.reflectionPoint = {
+        x: this.point.x + Math.cos(this.reflectionAngle) * this.reflectionLength,
+        y: this.point.y + Math.sin(this.reflectionAngle) * this.reflectionLength,
+    }
 }
 
 intersection.draw = function() {
@@ -397,12 +401,7 @@ intersection.draw = function() {
         ctx.lineTo(canvas.width, k * canvas.width + b);
         this.radius.stroke();
 
-        let reflectionLength = distance(line.start, line.end) - distance(line.start, this.point);
-        let reflectionPoint = {
-            x: this.point.x + Math.cos(this.reflectionAngle) * reflectionLength,
-            y: this.point.y + Math.sin(this.reflectionAngle) * reflectionLength,
-        }
-        drawPoint(reflectionPoint, 5, 'blue')
+        drawPoint(this.reflectionPoint, 5, 'blue')
     }
     drawPoint(this.point, 5, this.regularFillStyle);
 }
@@ -579,6 +578,11 @@ function vecTimes({x, y}, v) {
 function lineK({ start, end }) {
     return (end.y - start.y) / (end.x - start.x)
 }
+
+function lineAngle({ start, end }) {
+    return Math.atan2(end.y - start.y, end.x - start.x)
+}
+
 function lineB({ start, end }) {
     return start.y - start.x * lineK({ start, end })
 }
