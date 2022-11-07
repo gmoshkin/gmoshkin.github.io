@@ -223,7 +223,7 @@ ball.adjust = null;
 ball.velValInput = document.getElementById("velVal")
 ball.velValInput.value = ball.velVal
 ball.velValInput.onchange = () => ball.velVal = eval(ball.velValInput.value)
-ball.debug = null
+ball.debug = {}
 ball.trail = []
 ball.trailLength = 1000
 ball.currTrailIdx = 0
@@ -269,12 +269,13 @@ ball.simulate = function() {
             x: adjust.x + Math.cos(reflectAngle) * reflectLength,
             y: adjust.y + Math.sin(reflectAngle) * reflectLength
         }
-        if (!this.debug && !isFinite(reflect.x)) {
-            this.debug = { a, b, c, x0, x1, x0Err, x1Err, y0, y1, dirVec }
-            this.debug.originToBall = subVec(dirVec.start, circle.origin)
-            let offsetLen = vecNorm(this.debug.originToBall) - this.radius - circle.radius
-            let offsetDir = vecTimes(this.debug.originToBall, 1/vecNorm(this.debug.originToBall))
-            this.debug.adjust = subVec(dirVec.start, vecTimes(offsetDir, offsetLen))
+        if (!this.debug.reflectIsNaN && !isFinite(reflect.x)) {
+            let debug = { a, b, c, x0, x1, x0Err, x1Err, y0, y1, dirVec }
+            debug.originToBall = subVec(dirVec.start, circle.origin)
+            let offsetLen = vecNorm(debug.originToBall) - this.radius - circle.radius
+            let offsetDir = vecTimes(debug.originToBall, 1/vecNorm(debug.originToBall))
+            debug.adjust = subVec(dirVec.start, vecTimes(offsetDir, offsetLen))
+            this.debug.reflectIsNaN = debug
         }
         return { pos: reflect, velAngle: reflectAngle }
     } else {
@@ -340,11 +341,12 @@ ball.draw = function() {
         ctx.arc(next.pos.x, next.pos.y, this.radius, 0, 2 * Math.PI);
         stroke({ strokeStyle: '#808080' });
     }
-    if (this.debug) {
-        strokeBall(this.debug.dirVec.start, this.radius, 'blue')
-        strokeBall(this.debug.dirVec.end, this.radius, 'yellow')
-        if (this.debug.adjust)
-            strokeBall(this.debug.adjust, this.radius, 'red')
+    if (this.debug.reflectIsNaN) {
+        let debug = this.debug.reflectIsNaN
+        strokeBall(debug.dirVec.start, this.radius, 'blue')
+        strokeBall(debug.dirVec.end, this.radius, 'yellow')
+        if (debug.adjust)
+            strokeBall(debug.adjust, this.radius, 'red')
     }
 }
 
