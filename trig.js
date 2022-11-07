@@ -8,7 +8,7 @@ document.onmousemove = (event) => { lastEvent = event; mousePos = getMousePos() 
 canvas.onmousedown = (event) => {
     mouseDown = event.which; mousePos = convertMousePos(lastEvent = event)
 };
-canvas.onmouseup = (event) => { mouseDown = 0 };
+document.onmouseup = (event) => { mouseDown = 0 };
 setInterval(redraw, 17);
 
 var lastButton = null;
@@ -234,28 +234,36 @@ ball.simulate = function() {
         let originToBall = subVec(curPos, circle.origin)
         let offsetDir = vecTimes(originToBall, 1/vecNorm(originToBall))
         curPos = addVec(circle.origin, vecTimes(offsetDir, circle.radius - this.radius))
+        this.debug.jumpBack = curPos
+    } else {
+        this.debug.jumpBack = null
     }
     let newPos = addVec(curPos, this.vel);
     let dirVec = { start: curPos, end: newPos }
     defineLineProperties(dirVec)
+    this.debug.dirVec = dirVec
     if (distance(newPos, circle.origin) + this.radius > circle.radius) {
         // TODO
         let a = sqr(dirVec.k) + 1;
         let b = 2 * (dirVec.k * (dirVec.b - circle.origin.y) - circle.origin.x);
         let c = sqr(circle.origin.x) + sqr(dirVec.b - circle.origin.y) - sqr(circle.radius - this.radius);
-        let x0 = (-b + sqrt(sqr(b) - 4 * a * c)) / 2 / a;
-        let x1 = (-b - sqrt(sqr(b) - 4 * a * c)) / 2 / a;
+        let x0 = (-b - sqrt(sqr(b) - 4 * a * c)) / 2 / a;
+        let x1 = (-b + sqrt(sqr(b) - 4 * a * c)) / 2 / a;
+        let y0 = dirVec.k * x0 + dirVec.b
+        let y1 = dirVec.k * x1 + dirVec.b
         let adjust = null;
         if ((curPos.x - x0) * (curPos.x - newPos.x) > 0) {
-            adjust = { x: x0, y: dirVec.k * x0 + dirVec.b }
+            adjust = { x: x0, y: y0 }
         } else if (curPos.x != newPos.x) {
-            adjust = { x: x1, y: dirVec.k * x1 + dirVec.b }
+            adjust = { x: x1, y: y1 }
         } else {
             // sqr(x - circle.origin.x) + sqr(y - circle.origin.y) == sqr(circle.radius)
             let b = - 2 * circle.origin.y;
             let c = sqr(circle.origin.y) + sqr(curPos.x - circle.origin.x) - sqr(circle.radius);
-            let y0 = (-b + sqrt(sqr(b) - 4 * c)) / 2;
-            let y1 = (-b - sqrt(sqr(b) - 4 * c)) / 2;
+            y0 = (-b - sqrt(sqr(b) - 4 * c)) / 2;
+            y1 = (-b + sqrt(sqr(b) - 4 * c)) / 2;
+            this.debug.reflect.y0 = y0
+            this.debug.reflect.y1 = y1
             if ((curPos.y - y0) * (curPos.y - newPos.y) > 0) {
                 adjust = { x: curPos.x, y: y0 }
             } else {
@@ -277,8 +285,10 @@ ball.simulate = function() {
             debug.adjust = subVec(dirVec.start, vecTimes(offsetDir, offsetLen))
             this.debug.reflectIsNaN = debug
         }
+        this.debug.reflect = { a, b, c, v0: {x:x0, y:y0}, v1: {x:x1, y:y1}, adjust, radiusAngle, reflectAngle, reflect }
         return { pos: reflect, velAngle: reflectAngle }
     } else {
+        this.debug.reflect = null
         return { pos: newPos, velAngle: this.velAngle }
     }
 }
@@ -337,9 +347,18 @@ ball.draw = function() {
     stroke(this);
     if (!buttonIsOn(ball.ballGo)) {
         let next = this.simulate()
-        ctx.beginPath();
-        ctx.arc(next.pos.x, next.pos.y, this.radius, 0, 2 * Math.PI);
-        stroke({ strokeStyle: '#808080' });
+        strokeBall(next.pos, this.radius, '#808080')
+        if (this.debug.jumpBack) {
+            strokeBall(this.debug.jumpBack, this.radius, 'green')
+        }
+        if (this.debug.reflect) {
+            let v0 = this.debug.reflect.v0
+            strokeBall(v0, this.radius, '#666666')
+            ctx.fillText('x0', v0.x - 5, v0.y + 3)
+            let v1 = this.debug.reflect.v1
+            strokeBall(v1, this.radius, '#666666')
+            ctx.fillText('x1', v1.x - 5, v1.y + 3)
+        }
     }
     if (this.debug.reflectIsNaN) {
         let debug = this.debug.reflectIsNaN
