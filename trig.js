@@ -236,7 +236,24 @@ ball.velValInput.onchange = () => ball.velVal = eval(ball.velValInput.value)
 ball.debug = {}
 ball.trail = []
 ball.trailLength = 1000
-ball.currTrailIdx = 0
+ball.ballTrailInput = document.getElementById('ballTrail')
+ball.ballTrailInput.value = ball.trailLength
+ball.ballTrailInput.onchange = () => {
+    // TODO: there's a bug in here somewhere
+    ball.trailLength = eval(ball.ballTrailInput.value)
+    if (ball.trail.length > ball.trailLength) {
+        let tail = ball.trail.splice(ball.lastTrailIdx + 1)
+        if (ball.trail.length < ball.trailLength) {
+            let trailStart = tail.splice(ball.trail.length - ball.trailLength + tail.length)
+            ball.trail = [...trailStart, ...ball.trail]
+            ball.lastTrailIdx = ball.trail.length - 1
+        } else {
+            ball.trail.splice(ball.trailLength)
+            ball.lastTrailIdx = ball.trail.length - 1
+        }
+    }
+}
+ball.lastTrailIdx = -1
 
 ball.simulate = function() {
     let curPos = this.pos
@@ -305,13 +322,13 @@ ball.simulate = function() {
 
 ball.update = function() {
     if (buttonIsOn(this.ballTrail)) {
-        this.trail[this.currTrailIdx] = {...this.pos}
-        if (++this.currTrailIdx == this.trailLength) {
-            this.currTrailIdx = 0
+        if (++this.lastTrailIdx >= this.trailLength) {
+            this.lastTrailIdx = 0
         }
+        this.trail[this.lastTrailIdx] = {...this.pos}
     } else {
         this.trail.length = 0
-        this.currTrailIdx = 0
+        this.lastTrailIdx = -1
     }
     let next = this.simulate()
     this.pos = next.pos
@@ -336,7 +353,7 @@ ball.respawn()
 ball.draw = function() {
     if (buttonIsOn(this.ballTrail) && this.trail.length > 0) {
         ctx.beginPath()
-        let start = this.currTrailIdx
+        let start = (this.lastTrailIdx + 1) % this.trail.length
         if (start >= this.trail.length) start = 0
         ctx.moveTo(this.trail[start].x, this.trail[start].y)
         for (let i = start + 1; i < this.trail.length; i++) {
