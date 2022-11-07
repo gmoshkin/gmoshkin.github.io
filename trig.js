@@ -252,7 +252,7 @@ ball.simulate = function() {
         let y0 = dirVec.k * x0 + dirVec.b
         let y1 = dirVec.k * x1 + dirVec.b
         let adjust = null;
-        if ((curPos.x - x0) * (curPos.x - newPos.x) > 0) {
+        if (Math.abs(newPos.x - x0) < Math.abs(newPos.x - x1)) {
             adjust = { x: x0, y: y0 }
         } else if (curPos.x != newPos.x) {
             adjust = { x: x1, y: y1 }
@@ -264,7 +264,7 @@ ball.simulate = function() {
             y1 = (-b + sqrt(sqr(b) - 4 * c)) / 2;
             this.debug.reflect.y0 = y0
             this.debug.reflect.y1 = y1
-            if ((curPos.y - y0) * (curPos.y - newPos.y) > 0) {
+            if (Math.abs(newPos.y - y0) < Math.abs(newPos.y - y1)) {
                 adjust = { x: curPos.x, y: y0 }
             } else {
                 adjust = { x: curPos.x, y: y1 }
@@ -350,14 +350,6 @@ ball.draw = function() {
         strokeBall(next.pos, this.radius, '#808080')
         if (this.debug.jumpBack) {
             strokeBall(this.debug.jumpBack, this.radius, 'green')
-        }
-        if (this.debug.reflect) {
-            let v0 = this.debug.reflect.v0
-            strokeBall(v0, this.radius, '#666666')
-            ctx.fillText('x0', v0.x - 5, v0.y + 3)
-            let v1 = this.debug.reflect.v1
-            strokeBall(v1, this.radius, '#666666')
-            ctx.fillText('x1', v1.x - 5, v1.y + 3)
         }
     }
     if (this.debug.reflectIsNaN) {
