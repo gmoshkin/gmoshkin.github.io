@@ -3,6 +3,7 @@ const body = document.getElementsByTagName('body')[0]
 
 const ctx = canvas.getContext("2d");
 const debugSection = document.getElementsByTagName('debug')[0];
+const debugFields = document.getElementsByTagName('fields')[0];
 
 document.onmousemove = (event) => { lastEvent = event; mousePos = getMousePos() };
 canvas.onmousedown = (event) => {
@@ -137,6 +138,15 @@ circle.draw = function() {
 // line
 
 const line = new Figure('line');
+line.button.onclick = () => {
+    toggleButton(line.button)
+    if (buttonIsOn(line.button)) {
+        debugFields.style.display = ''
+    } else {
+        debugFields.style.display = 'none'
+    }
+}
+debugFields.style.display = 'none'
 line.start = {x: 320, y: 300}
 line.end = {x: 500, y: 400}
 line.lineDash = [3, 3];
@@ -530,7 +540,7 @@ function addDebugField(name) {
     let field = document.createElement('field')
     field.innerHTML = name + ': ';
     field.id = name;
-    debugSection.appendChild(field);
+    debugFields.appendChild(field);
     return field
 }
 
