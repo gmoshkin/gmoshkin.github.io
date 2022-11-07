@@ -228,7 +228,7 @@ ball.trail = []
 ball.trailLength = 1000
 ball.currTrailIdx = 0
 
-ball.getNextPos = function() {
+ball.simulate = function() {
     let curPos = this.pos
     if (distance(curPos, circle.origin) + this.radius > circle.radius) {
         let originToBall = subVec(curPos, circle.origin)
@@ -269,7 +269,6 @@ ball.getNextPos = function() {
             x: adjust.x + Math.cos(reflectAngle) * reflectLength,
             y: adjust.y + Math.sin(reflectAngle) * reflectLength
         }
-        this.velAngle = reflectAngle
         if (!this.debug && !isFinite(reflect.x)) {
             this.debug = { a, b, c, x0, x1, x0Err, x1Err, y0, y1, dirVec }
             this.debug.originToBall = subVec(dirVec.start, circle.origin)
@@ -277,9 +276,9 @@ ball.getNextPos = function() {
             let offsetDir = vecTimes(this.debug.originToBall, 1/vecNorm(this.debug.originToBall))
             this.debug.adjust = subVec(dirVec.start, vecTimes(offsetDir, offsetLen))
         }
-        return reflect
+        return { pos: reflect, velAngle: reflectAngle }
     } else {
-        return newPos
+        return { pos: newPos, velAngle: this.velAngle }
     }
 }
 
@@ -293,7 +292,9 @@ ball.update = function() {
         this.trail.length = 0
         this.currTrailIdx = 0
     }
-    this.pos = this.getNextPos()
+    let next = this.simulate()
+    this.pos = next.pos
+    this.velAngle = next.velAngle
 }
 
 ball.updateMove = function() {
@@ -334,9 +335,9 @@ ball.draw = function() {
     ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
     stroke(this);
     if (!buttonIsOn(ball.ballGo)) {
-        let nextPos = this.getNextPos()
+        let next = this.simulate()
         ctx.beginPath();
-        ctx.arc(nextPos.x, nextPos.y, this.radius, 0, 2 * Math.PI);
+        ctx.arc(next.pos.x, next.pos.y, this.radius, 0, 2 * Math.PI);
         stroke({ strokeStyle: '#808080' });
     }
     if (this.debug) {
