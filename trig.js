@@ -313,7 +313,7 @@ ball.simulate = function() {
             this.debug.reflectIsNaN = debug
         }
         this.debug.reflect = { a, b, c, v0: {x:x0, y:y0}, v1: {x:x1, y:y1}, adjust, radiusAngle, reflectAngle, reflect }
-        return { pos: reflect, velAngle: reflectAngle }
+        return { pos: reflect, velAngle: reflectAngle, adjust }
     } else {
         this.debug.reflect = null
         return { pos: newPos, velAngle: this.velAngle }
@@ -330,6 +330,7 @@ ball.update = function() {
         this.trail.length = 0
         this.lastTrailIdx = -1
     }
+    // FIXME: this position can also be outside circle
     let next = this.simulate()
     this.pos = next.pos
     this.velAngle = next.velAngle
@@ -377,6 +378,13 @@ ball.draw = function() {
         strokeBall(next.pos, this.radius, '#808080')
         if (this.debug.jumpBack) {
             strokeBall(this.debug.jumpBack, this.radius, 'green')
+        }
+        let wouldBePos = addVec(this.pos, this.vel)
+        drawLineSegment({ start: this.pos, end: wouldBePos })
+        if (next.adjust) {
+            strokeBall(next.adjust, this.radius, 'yellow', { lineDash: [2, 4] })
+            drawLineSegment({ start: next.adjust, end: next.pos, strokeStyle: '#808080', lineDash: [3, 4] })
+            drawLineSegment({ start: next.adjust, end: circle.origin, strokeStyle: '#808080', lineDash: [1, 4] })
         }
     }
     if (this.debug.reflectIsNaN) {
@@ -678,7 +686,7 @@ function drawPoint({x, y}, r, style) {
 function strokeBall({x, y}, r, style) {
     ctx.beginPath();
     ctx.arc(x, y, r, 0, 2 * Math.PI);
-    stroke({strokeStyle: style})
+    stroke(typeof style == 'object' ? style: {strokeStyle: style})
 }
 
 function drawLine(obj) {
