@@ -232,12 +232,14 @@ ball.tick = addButton('tick', () => { ball.update() })
 ball.adjust = null;
 ball.velValInput = document.getElementById("velVal")
 ball.velValInput.value = ball.velVal
+ball.velValInput.onkeydown = (e) => changeValueUpOrDown(ball.velValInput, e)
 ball.velValInput.onchange = () => ball.velVal = eval(ball.velValInput.value)
 ball.debug = {}
 ball.trail = []
 ball.trailLength = 1000
 ball.ballTrailInput = document.getElementById('ballTrail')
 ball.ballTrailInput.value = ball.trailLength
+ball.ballTrailInput.onkeydown = (e) => changeValueUpOrDown(ball.ballTrailInput, e)
 ball.ballTrailInput.onchange = () => {
     // TODO: there's a bug in here somewhere
     ball.trailLength = eval(ball.ballTrailInput.value)
@@ -592,6 +594,22 @@ function toggleButton(button) {
 
 function buttonIsOn(button) {
     return button.className == 'button_on'
+}
+
+function changeValueUpOrDown(input, event) {
+    let delta = (event.ctrlKey) ? 100 : (event.shiftKey) ? 10 : 1;
+    switch (event.key) {
+        case 'ArrowUp': {
+            input.value = eval(input.value) + delta
+            input.onchange()
+            break
+        }
+        case 'ArrowDown': {
+            input.value = eval(input.value) - delta
+            input.onchange()
+            break
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
