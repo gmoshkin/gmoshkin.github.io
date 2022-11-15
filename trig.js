@@ -203,6 +203,9 @@ Object.defineProperty(ball, 'vel', { get() {
         y: ball.velVal * Math.sin(ball.velAngle)
     }
 } })
+ball.mass = 1
+ball.accVal = 0
+ball.accAngle = 0
 Object.defineProperty(ball, 'newPos', { get() {
     return addVec(this.pos, this.vel)
 } })
@@ -258,6 +261,10 @@ ball.ballTrailInput.onchange = () => {
 ball.lastTrailIdx = -1
 
 ball.simulate = function() {
+    // this.accVal * sqr(this.pos) + this.velVal * this.pos
+    // x = a/2 t^2 + b t + c
+    // x' = a t + b
+    // x" = a
     let curPos = this.pos
     if (distance(curPos, circle.origin) + this.radius > circle.radius) {
         let originToBall = subVec(curPos, circle.origin)
