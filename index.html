@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Developer & Creative</title>
+    <title>gmoshkin</title>
     <style>
         * {
             margin: 0;
@@ -13,340 +13,210 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow: hidden;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
             text-align: center;
-            padding: 60px 0;
-            color: white;
+            position: relative;
+            z-index: 2;
         }
 
-        .profile-section {
-            margin-bottom: 40px;
+        .name {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 2rem;
+            background: linear-gradient(45deg, #667eea, #764ba2, #f093fb);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 4s ease-in-out infinite;
+            text-shadow: 0 0 30px rgba(102, 126, 234, 0.3);
         }
 
-        .profile-section h1 {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .profile-section .tagline {
-            font-size: 1.3rem;
-            margin-bottom: 30px;
-            opacity: 0.9;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-top: 40px;
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-        }
-
-        .card h2 {
-            color: #4a5568;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-            border-bottom: 3px solid #667eea;
-            padding-bottom: 10px;
-        }
-
-        .skill-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .skill-tag {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 25px;
-            text-align: center;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: transform 0.2s ease;
-        }
-
-        .skill-tag:hover {
-            transform: scale(1.05);
-        }
-
-        .project-list {
-            list-style: none;
-            margin-top: 20px;
-        }
-
-        .project-list li {
-            padding: 15px 0;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .project-list li:last-child {
-            border-bottom: none;
-        }
-
-        .project-name {
-            font-weight: 600;
-            color: #4a5568;
-        }
-
-        .project-tech {
-            font-size: 0.9rem;
-            color: #718096;
-            font-style: italic;
-        }
-
-        .music-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .music-item {
-            background: #f7fafc;
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
-        }
-
-        .music-item .artist {
-            font-weight: 600;
-            color: #4a5568;
-        }
-
-        .music-item .track {
-            font-size: 0.9rem;
-            color: #718096;
-            margin-top: 5px;
-        }
-
-        .contact-section {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 30px;
-            margin-top: 40px;
-            text-align: center;
-            color: white;
-        }
-
-        .contact-section h2 {
-            margin-bottom: 20px;
-            color: white;
-        }
-
-        .contact-links {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-top: 20px;
-        }
-
-        .contact-link {
+        .enter-link {
+            display: inline-block;
+            padding: 15px 35px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
             color: white;
             text-decoration: none;
-            padding: 12px 25px;
-            border: 2px solid white;
-            border-radius: 25px;
-            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
         }
 
-        .contact-link:hover {
-            background: white;
-            color: #667eea;
+        .enter-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .enter-link:hover::before {
+            left: 100%;
+        }
+
+        .enter-link:hover {
+            border-color: rgba(102, 126, 234, 0.8);
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.3);
             transform: translateY(-2px);
         }
 
+        /* Floating particles background */
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: rgba(102, 126, 234, 0.6);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        .particle:nth-child(2n) {
+            background: rgba(118, 75, 162, 0.6);
+            animation-duration: 8s;
+            animation-delay: -2s;
+        }
+
+        .particle:nth-child(3n) {
+            background: rgba(240, 147, 251, 0.4);
+            animation-duration: 10s;
+            animation-delay: -4s;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+                opacity: 0.3;
+            }
+            25% {
+                opacity: 1;
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+                opacity: 0.8;
+            }
+            75% {
+                opacity: 0.6;
+            }
+        }
+
+        /* Responsive adjustments */
         @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                gap: 20px;
+            .name {
+                margin-bottom: 1.5rem;
             }
-
-            .profile-section h1 {
-                font-size: 2.5rem;
-            }
-
-            .contact-links {
-                flex-direction: column;
-                align-items: center;
-                gap: 15px;
+            
+            .enter-link {
+                padding: 12px 28px;
+                font-size: 1rem;
             }
         }
 
-        .demo-link {
-            display: inline-block;
-            margin-top: 10px;
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s ease;
+        /* Subtle glow effect */
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            animation: pulse 4s ease-in-out infinite;
         }
 
-        .demo-link:hover {
-            color: #764ba2;
-            text-decoration: underline;
+        @keyframes pulse {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.5;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 0.8;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Floating particles -->
+    <div class="particle" style="top: 10%; left: 10%;"></div>
+    <div class="particle" style="top: 20%; left: 80%;"></div>
+    <div class="particle" style="top: 30%; left: 30%;"></div>
+    <div class="particle" style="top: 40%; left: 70%;"></div>
+    <div class="particle" style="top: 60%; left: 20%;"></div>
+    <div class="particle" style="top: 70%; left: 90%;"></div>
+    <div class="particle" style="top: 80%; left: 50%;"></div>
+    <div class="particle" style="top: 90%; left: 15%;"></div>
+    <div class="particle" style="top: 15%; left: 60%;"></div>
+    <div class="particle" style="top: 35%; left: 85%;"></div>
+
     <div class="container">
-        <header>
-            <div class="profile-section">
-                <h1>Interactive Developer & Creative</h1>
-                <p class="tagline">Crafting engaging web experiences through code, physics, and sound</p>
-            </div>
-        </header>
-
-        <div class="main-content">
-            <div class="card">
-                <h2>🚀 Technical Skills</h2>
-                <p>I specialize in creating interactive web applications with a focus on physics simulations and dynamic user experiences.</p>
-                
-                <div class="skill-grid">
-                    <div class="skill-tag">JavaScript</div>
-                    <div class="skill-tag">HTML5 Canvas</div>
-                    <div class="skill-tag">Physics Programming</div>
-                    <div class="skill-tag">Web Development</div>
-                    <div class="skill-tag">Interactive Design</div>
-                    <div class="skill-tag">Mathematical Modeling</div>
-                    <div class="skill-tag">Animation</div>
-                    <div class="skill-tag">UI/UX</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>💻 Featured Projects</h2>
-                <ul class="project-list">
-                    <li>
-                        <div>
-                            <div class="project-name">Physics Simulation Engine</div>
-                            <div class="project-tech">JavaScript, HTML5 Canvas, Trigonometry</div>
-                        </div>
-                        <a href="trig.html" class="demo-link">View Demo</a>
-                    </li>
-                    <li>
-                        <div>
-                            <div class="project-name">Interactive Blog Platform</div>
-                            <div class="project-tech">HTML, CSS, Static Site Generation</div>
-                        </div>
-                        <a href="blog.html" class="demo-link">Read More</a>
-                    </li>
-                    <li>
-                        <div>
-                            <div class="project-name">Music Discovery Platform</div>
-                            <div class="project-tech">Content Curation, Web Design</div>
-                        </div>
-                        <a href="dpl.html" class="demo-link">Explore</a>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="card">
-                <h2>🎵 Music & Interests</h2>
-                <p>I'm passionate about electronic music and experimental sounds. I curate playlists and explore the intersection of technology and audio.</p>
-                
-                <div class="music-grid">
-                    <div class="music-item">
-                        <div class="artist">Dylan Brady</div>
-                        <div class="track">Experimental Electronic</div>
-                    </div>
-                    <div class="music-item">
-                        <div class="artist">blackwinterwells</div>
-                        <div class="track">Hyperpop / Digital</div>
-                    </div>
-                    <div class="music-item">
-                        <div class="artist">Skrillex</div>
-                        <div class="track">Bass / Electronic</div>
-                    </div>
-                    <div class="music-item">
-                        <div class="artist">Son Lux</div>
-                        <div class="track">Alternative / Cinematic</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>🎯 What I Do</h2>
-                <p><strong>Interactive Development:</strong> I create engaging web experiences that blend mathematics, physics, and creative coding.</p>
-                <br>
-                <p><strong>Physics Simulations:</strong> Building realistic motion systems with ball physics, collision detection, and mathematical modeling.</p>
-                <br>
-                <p><strong>Creative Projects:</strong> Exploring the boundaries between technology and art through experimental web applications.</p>
-                <br>
-                <p><strong>Music Curation:</strong> Discovering and sharing cutting-edge electronic music and experimental sounds.</p>
-            </div>
-        </div>
-
-        <div class="contact-section">
-            <h2>Let's Connect</h2>
-            <p>Interested in collaborating or discussing interactive web development?</p>
-            <div class="contact-links">
-                <a href="https://github.com" class="contact-link">GitHub</a>
-                <a href="mailto:hello@example.com" class="contact-link">Email</a>
-                <a href="https://linkedin.com" class="contact-link">LinkedIn</a>
-            </div>
-        </div>
+        <h1 class="name">gmoshkin</h1>
+        <a href="about.html" class="enter-link">Enter</a>
     </div>
 
     <script>
-        // Add subtle animations on scroll
-        window.addEventListener('scroll', () => {
-            const cards = document.querySelectorAll('.card');
-            cards.forEach(card => {
-                const cardTop = card.getBoundingClientRect().top;
-                const cardVisible = cardTop < window.innerHeight - 100;
+        // Add some interactive particles on mouse move
+        document.addEventListener('mousemove', (e) => {
+            const particles = document.querySelectorAll('.particle');
+            const mouseX = e.clientX / window.innerWidth;
+            const mouseY = e.clientY / window.innerHeight;
+            
+            particles.forEach((particle, index) => {
+                const speed = (index + 1) * 0.5;
+                const x = mouseX * speed;
+                const y = mouseY * speed;
                 
-                if (cardVisible) {
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }
+                particle.style.transform = `translate(${x}px, ${y}px)`;
             });
         });
 
-        // Initialize card animations
+        // Add a subtle typing effect to the name
         document.addEventListener('DOMContentLoaded', () => {
-            const cards = document.querySelectorAll('.card');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-                
-                setTimeout(() => {
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 200);
-            });
+            const nameElement = document.querySelector('.name');
+            const originalText = nameElement.textContent;
+            nameElement.textContent = '';
+            
+            let i = 0;
+            const typeWriter = () => {
+                if (i < originalText.length) {
+                    nameElement.textContent += originalText.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, 150);
+                }
+            };
+            
+            setTimeout(typeWriter, 500);
         });
     </script>
 </body>
