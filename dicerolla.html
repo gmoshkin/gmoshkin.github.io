@@ -20,12 +20,26 @@
         .page-header {
             font-size: 2rem;
             text-align: center;
+            margin-top: 0;
+            margin-bottom: 0;
+            display: grid;
+            grid-template-columns: 30% 40% 30%;
         }
 
-        .page-header > h1 {
+        .page-header h1 {
             margin-top: 0;
             margin-bottom: 0;
             border: 10px red;
+        }
+
+        #total_count {
+            position: absolute;
+            left: 3rem;
+            top: 2rem;
+            background: linear-gradient(45deg, #465e8a, #362b82, #a0638b);
+            border-radius: 20px;
+            min-width: 10rem;
+            height: 2.7rem;
         }
 
         .dice-buttons-container {
@@ -73,33 +87,82 @@
             font-size: 1.8rem;
             background: linear-gradient(225deg, #667eea, #764ba2, #f093fb);
             border-radius: 5px;
-            height: 2.6rem;
+            height: 1.9rem;
             margin-bottom: 8px;
             position: absolute;
-            top: 0;
+            top: 50%;
             left: 50%;
-            transform: translate(-50%, 0);
+            transform: translate(-50%, -50%);
             z-index: -1;
         }
 
     </style>
     <script>
+        let dice_button_elements = [];
         let dice_text_elements = [];
         let dice_width_elements = [];
+        let total_count_element = null;
         let dice_counts = [];
         let total_count = 0;
         let key_to_dice = {
             '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6, '8': 7, '9': 8, '0': 9,
             'q': 10, 'w': 11, 'e': 12, 'r': 13, 't': 14, 'y': 15, 'u': 16, 'i': 17, 'o': 18, 'p': 19,
         }
-        window.addEventListener('load', function() {
-            console.log('loaded')
-            for (let i = 1; i <= 20; i++) {
-                let elem = document.getElementById('t' + i)
-                dice_text_elements[dice_text_elements.length] = elem;
+        let history = []
 
-                elem = document.getElementById('w' + i)
-                dice_width_elements[dice_width_elements.length] = elem;
+        function update_dice(index, offset) {
+            if (dice_counts[index] + offset < 0) return;
+
+            const dice = dice_text_elements[index]
+
+            count = (dice_counts[index] += offset);
+            total_count += offset;
+
+            total_count_element.textContent = total_count
+
+            if (count)
+                dice.textContent = count;
+            else
+                dice.textContent = '';
+
+            for (let i = 0; i < 20; i++) {
+                let count = dice_counts[i];
+                let width = dice_width_elements[i];
+                if (count == 0) {
+                    width.style.width = '0';
+                } else {
+                    width.style.width = count / total_count * 100 + '%';
+                }
+            }
+        }
+
+        window.addEventListener('load', function() {
+            document.addEventListener('click', event => event.preventDefault());
+            document.addEventListener('contextmenu', event => event.preventDefault());
+
+            total_count_element = document.getElementById('total_count')
+
+            for (let i = 1; i <= 20; i++) {
+
+                let button = document.getElementById('b' + i)
+                dice_button_elements[dice_button_elements.length] = button;
+
+                let dice_index = i - 1;
+                button.addEventListener("click", function(event) {
+                    update_dice(dice_index, 1);
+                    history[history.length] = [dice_index, 1]
+                })
+
+                button.addEventListener("contextmenu", function(event) {
+                    update_dice(dice_index, -1);
+                    history[history.length] = [dice_index, -1]
+                })
+
+                let text = document.getElementById('t' + i)
+                dice_text_elements[dice_text_elements.length] = text;
+
+                let width = document.getElementById('w' + i)
+                dice_width_elements[dice_width_elements.length] = width;
 
                 dice_counts[dice_counts.length] = 0;
             }
@@ -107,17 +170,19 @@
             document.addEventListener("keypress", function(event) {
                 const dice_index = key_to_dice[event.key]
                 if (dice_index === undefined) return;
-                const dice = dice_text_elements[dice_index]
-                const count = (dice_counts[dice_index] += 1);
-                total_count += 1;
 
-                dice.textContent = count;
+                update_dice(dice_index, 1);
+                history[history.length] = [dice_index, 1]
+            })
 
-                for (let i = 0; i < 20; i++) {
-                    let count = dice_counts[i];
-                    let width = dice_width_elements[i];
-                    width.style.width = count / total_count * 100 + '%';
-                    console.log(width.style.width)
+            document.addEventListener('keydown', function(event) {
+                if (event.key == 'Backspace' || (event.key == 'z' && event.ctrlKey)) {
+                    if (history.length == 0) return;
+
+                    let last = history[history.length - 1];
+                    history.length -= 1;
+
+                    update_dice(last[0], -last[1]);
                 }
             })
         })
@@ -125,20 +190,22 @@
 </head>
 <body>
     <div class="page-header">
-        <h1>DiceRolla</h1>
+        <div></div>
+        <div><h1>DiceRolla</h1></div>
+        <div id="total_count">0</div>
     </div>
     <buttons class="dice-buttons-container">
         <column class="dice-buttons-column">
-            <div class="dice-button">1  </div>
-            <div class="dice-button">2  </div>
-            <div class="dice-button">3  </div>
-            <div class="dice-button">4  </div>
-            <div class="dice-button">5  </div>
-            <div class="dice-button">6  </div>
-            <div class="dice-button">7  </div>
-            <div class="dice-button">8  </div>
-            <div class="dice-button">9  </div>
-            <div class="dice-button">10 <small>0</small></div>
+            <div id="b1" class="dice-button">1  </div>
+            <div id="b2" class="dice-button">2  </div>
+            <div id="b3" class="dice-button">3  </div>
+            <div id="b4" class="dice-button">4  </div>
+            <div id="b5" class="dice-button">5  </div>
+            <div id="b6" class="dice-button">6  </div>
+            <div id="b7" class="dice-button">7  </div>
+            <div id="b8" class="dice-button">8  </div>
+            <div id="b9" class="dice-button">9  </div>
+            <div id="b10" class="dice-button">10 <small>0</small></div>
         </column>
         <column class="dice-count-column">
             <div class="dice-count"><div id="t1"  class="dice-count-text"></div><div id="w1"  class="dice-count-rect"></div></div>
@@ -153,16 +220,16 @@
             <div class="dice-count"><div id="t10" class="dice-count-text"></div><div id="w10" class="dice-count-rect"></div></div>
         </column>
         <column class="dice-buttons-column">
-            <div class="dice-button">11 <small>q</small></div>
-            <div class="dice-button">12 <small>w</small></div>
-            <div class="dice-button">13 <small>e</small></div>
-            <div class="dice-button">14 <small>r</small></div>
-            <div class="dice-button">15 <small>t</small></div>
-            <div class="dice-button">16 <small>y</small></div>
-            <div class="dice-button">17 <small>u</small></div>
-            <div class="dice-button">18 <small>i</small></div>
-            <div class="dice-button">19 <small>o</small></div>
-            <div class="dice-button">20 <small>p</small></div>
+            <div id="b11" class="dice-button">11 <small>q</small></div>
+            <div id="b12" class="dice-button">12 <small>w</small></div>
+            <div id="b13" class="dice-button">13 <small>e</small></div>
+            <div id="b14" class="dice-button">14 <small>r</small></div>
+            <div id="b15" class="dice-button">15 <small>t</small></div>
+            <div id="b16" class="dice-button">16 <small>y</small></div>
+            <div id="b17" class="dice-button">17 <small>u</small></div>
+            <div id="b18" class="dice-button">18 <small>i</small></div>
+            <div id="b19" class="dice-button">19 <small>o</small></div>
+            <div id="b20" class="dice-button">20 <small>p</small></div>
         </column>
         <column class="dice-count-column">
             <div class="dice-count"><div id="t11" class="dice-count-text"></div><div id="w11" class="dice-count-rect"></div></div>
